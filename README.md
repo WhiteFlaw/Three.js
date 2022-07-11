@@ -1,2 +1,2 @@
 # Three.js-pra
-练手three
+今后three.js的小练习都放在这里.
