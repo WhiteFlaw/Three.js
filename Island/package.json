@@ -1,0 +1,12 @@
+{
+  "name": "island",
+  "version": "1.0.0",
+  "description": "an Island model based on Threejs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "author": "",
+  "license": "ISC"
+}
