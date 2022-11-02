@@ -1,0 +1,95 @@
+import * as THREE from 'three';
+import { DirectionalLight } from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { HDRCubeTextureLoader } from 'three/examples/jsm/loaders/HDRCubeTextureLoader';
+
+const params = {
+    envMap: 'HDR',
+    roughness: 0.0,
+    metalness: 0.0,
+    exposure: 1.0,
+    debug: false
+};
+
+
+let camera, scene, renderer, controls;
+let hdrCubeRenderTarget;
+let hdrCubeMap;
+
+////////////////////////////////////////创建相机和场景
+scene = new THREE.Scene();
+camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 10);
+scene.add(camera);
+//////////////////////////////////////////////////////
+
+////////////////////////////////////////创建渲染器
+renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement)
+//////////////////////////////////////////////////
+
+////////////////////////////////////////创建轨道控制器
+controls = new OrbitControls(camera, renderer.domElement);
+/////////////////////////////////////////////////////
+
+////////////////////////////////////////创建模型
+const geometry = new THREE.SphereGeometry(2, 20, 20);  //xyz111的正方体
+
+const material = new THREE.MeshStandardMaterial({
+    metalness: 0.7,
+    roughness: 0.1,
+});
+
+const mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
+////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////创建光源
+const light = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(light);
+
+const directionalLight = new DirectionalLight(0xffffff, 0.5);
+directionalLight.position.set(10, 10, 10);//xyz
+scene.add(directionalLight);
+/////////////////////////////////////////////////
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);  //删了这句模型贴图就没了, 参考一下PREMGenerator作用
+
+const hdrUrls = ['px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr'];
+hdrCubeMap = new HDRCubeTextureLoader()
+    .setPath('../assets/pisaHDR/')
+    .load(hdrUrls, function () {
+
+        hdrCubeRenderTarget = pmremGenerator.fromCubemap(hdrCubeMap);
+
+    });
+
+
+/////////////////////////////////////////render方法
+function render() {   //调用render()进行重渲染
+    requestAnimationFrame(render);
+    mesh.material.envMap = hdrCubeRenderTarget.texture;  //这句删了模型贴图没了
+    mesh.rotation.y += 0.005;
+    scene.background = hdrCubeMap;
+    renderer.render(scene, camera);
+}
+///////////////////////////////////////////////////
+
+render();
+
+window.addEventListener('resize', () => {
+    //更新相机锥体视区长宽比
+    camera.aspect = window.innerWidth / window.innerHeight;
+
+    //手动更新相机的投影矩阵(重新计算投影矩阵), 相机对象的投影矩阵相关属性变化后，再重新计算相机投影矩阵值, 否则会造成资源浪费
+    camera.updateProjectionMatrix();
+
+    //更新渲染器
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    //设置渲染器的像素比
+    renderer.setPixelRatio(window.devicePixelRatio);
+})
