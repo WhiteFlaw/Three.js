@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        // 三维画笔
+        const gl = canvas.getContext('webgl');
+
+        // 声明颜色rgba, 刷新颜色缓冲区所用的颜色
+        gl.clearColor(1, 1, 0, 1); 
+        
+        // 写死, webgl语法规则
+        gl.clear(gl.COLOR_BUFFER_BIT); 
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import { Color } from 'https://unpkg.com/three/build/three.module.js';
+        const canvas = document.querySelector('#canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 三维画笔
+        const gl = canvas.getContext('webgl');
+
+        // 写死, webgl语法规则
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // Color实例对象
+        const color = new Color('rgba(255, 0, 0, 1)')
+
+        !(function ani() {
+            // 偏移 饱和度, 色相等偏移
+            color.offsetHSL(0.005, 0, 0);
+
+            // 声明颜色rgba
+            gl.clearColor(color.r, color.g, color.b, 1);
+
+            // 刷底色
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            requestAnimationFrame(ani);
+        })()
+    </script>
+</body>
+
+</html>
