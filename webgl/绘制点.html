@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        // glsl es语言
+        // 顶点着色器, 钢筋
+        void main(){
+            //点位
+            gl_Position=vec4(0,0,0,1);
+            //尺寸
+            gl_PointSize=50.0;
+          }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        // 片源着色器, 水泥
+        void main(){
+            gl_FragColor=vec4(1,1,0,1);
+          }
+    </script>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 获取顶点着色器文本
+        const vsSource = document.querySelector('#vertexShader').innerText;
+        // 获取片源着色器文本
+        const fsSource = document.querySelector('#fragmentShader').innerText;
+        
+        
+        const gl = canvas.getContext('webgl');
+        
+        // 初始化着色器
+        // 解析着色器文本, 关联webgl上下文实现js和glsl通信
+        initShaders(gl, vsSource, fsSource)
+
+        gl.clearColor(0, 0, 0, 1);
+
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // 绘制顶点
+        gl.drawArrays(gl.POINTS, 0, 1);
+
+        // 三维画笔
+
+        function initShaders(gl, vsSource, fsSource) {
+            //创建程序对象
+            const program = gl.createProgram();
+            //建立着色对象
+            const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+            const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+            //把顶点着色对象装进程序对象中
+            gl.attachShader(program, vertexShader);
+            //把片元着色对象装进程序对象中
+            gl.attachShader(program, fragmentShader);
+            //连接webgl上下文对象和程序对象
+            gl.linkProgram(program);
+            //启动程序对象
+            gl.useProgram(program);
+            //将程序对象挂到上下文对象上
+            gl.program = program;
+            return true;
+        }
+
+        function loadShader(gl, type, source) {
+            //根据着色类型，建立着色器对象
+            const shader = gl.createShader(type);
+            //将着色器源文件传入着色器对象中
+            gl.shaderSource(shader, source);
+            //编译着色器对象
+            gl.compileShader(shader);
+            //返回着色器对象
+            return shader;
+        }
+    </script>
+
+
+</body>
+
+</html>
