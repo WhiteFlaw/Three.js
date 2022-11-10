@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        /* attribute, 存储限定符(规定存储的变量为何种类型), 只有顶点着色器才能使用
+        /* js通过attribute与与顶点着色器交流顶点相关的数据, vec4是类型, 四维向量 */
+        /* 将a_Position变量赋值到gl_Position, js根据变量名导入变量 */
+
+        attribute vec4 a_Position;
+
+        void main(){
+            gl_Position = a_Position;
+            // 原为gl_Position = vec4(0, 0, 0, 1);现在不在glsl里改, 在js里修改a_Position
+            gl_PointSize=50.0;
+          }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        // 片源着色器, 水泥
+        void main(){
+            gl_FragColor=vec4(1,1,0,1);
+          }
+    </script>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // 获取顶点着色器文本
+        const vsSource = document.querySelector('#vertexShader').innerText;
+        // 获取片源着色器文本
+        const fsSource = document.querySelector('#fragmentShader').innerText;
+
+        const gl = canvas.getContext('webgl');
+
+        // 初始化着色器
+        // 解析着色器文本, 关联webgl上下文实现js和glsl通信
+        initShaders(gl, vsSource, fsSource);
+
+        // 获取glsl es attribute顶点着色器变量并在js设置 ,但是这个对象要在js中修改也不现实
+        // 其内部依旧基于glsl es语言, 只有特定的js方法能够对其进行操作, 甚至赋值也不可以
+        const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
+
+        // 改变attribute顶点着色器变量a_Position的值
+        // gl.vertexAttrib3f(a_Position, 0.0, 0.5, 0.0);
+        // gl.vertexAttrb3f是一系列修改attr顶点着色器的方法之一
+        // 同族方法如gl.vertexAttrib1f(location, v0);改变attr变量的第一个值
+        // 同族方法如gl.vertexAttrib2f(location, v0, v1);改变前两个值xy
+        // 同族方法如gl.vertexAttrib3f(location, v0, v1, v2);改变前三个值xyz
+        // vertexAttrib3f()方法可以给attr顶点着色器变量赋值, 参数(attr顶点着色器变量, x位置, y位置, z位置)
+        gl.vertexAttrib2f(a_Position, 0, 1);
+
+        // glsl es原生函数命名规律: 基础函数名 + 参数个数 + 参数类型, 参考vertexAttrib3f
+
+        gl.clearColor(0, 0, 0, 1);
+
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        // 绘制顶点
+        gl.drawArrays(gl.POINTS, 0, 1);
+
+        function initShaders(gl, vsSource, fsSource) {
+            //创建程序对象, 也就是创建js中的gl.program, 其中包含顶点着色器和片元着色器, 也和webgl有联系
+            const program = gl.createProgram();
+            //建立着色对象
+            const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+            const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+            //把顶点着色对象装进程序对象中
+            gl.attachShader(program, vertexShader);
+            //把片元着色对象装进程序对象中
+            gl.attachShader(program, fragmentShader);
+            //连接webgl上下文对象和程序对象
+            gl.linkProgram(program);
+            //启动程序对象
+            gl.useProgram(program);
+            //将程序对象挂到上下文对象上
+            gl.program = program;
+            return true;
+        }
+
+        function loadShader(gl, type, source) {
+            //根据着色类型，建立着色器对象
+            const shader = gl.createShader(type);
+            //将着色器源文件传入着色器对象中
+            gl.shaderSource(shader, source);
+            //编译着色器对象
+            gl.compileShader(shader);
+            //返回着色器对象
+            return shader;
+        }
+    </script>
+
+
+</body>
+
+</html> 
