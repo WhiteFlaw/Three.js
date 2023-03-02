@@ -1,0 +1,226 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+		{
+			"imports": {
+				"three": "../build/three.module.js",
+				"three/addons/": "./jsm/"
+			}
+		}
+	</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        let camera, renderer, scene, crystal, composer, clock;
+        let gui, params;
+
+        init();
+        animate();
+
+        function init() {
+            const aspectRatio = window.innerWidth / window.innerHeight; // 纵横比
+            camera = new THREE.OrthographicCamera(- aspectRatio, aspectRatio, 1, - 1, 0.1, 10);
+            camera.position.y = 2 * Math.tan(Math.PI / 6);
+            camera.position.z = 2;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.shadowMap.enable = true;
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x151729);
+
+            clock = new THREE.Clock();
+
+            composer = new EffectComposer(renderer); // 后期效果处理器, 需要addPass一种实例化过的后期效果
+            const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera); // 实例化一种后期效果
+            composer.addPass(renderPixelatedPass)
+
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.maxzoom = 2; // 最小能将相机缩小多少
+
+            // GUI
+            gui = new GUI();
+            params = { pixelSize: 6, normalEdgeStrength: 0.3, depthEdgeStrength: 4, pixelAlignedPanning: true };
+            gui.add(params, 'pixelSize').min(1).max(16).step(1).onChange(() => {
+                renderPixelatedPass.setPixelSize(params.pixelSize);
+            })
+            gui.add(renderPixelatedPass, 'normalEdgeStrength').min(0).max(2).step(.05);
+            gui.add(renderPixelatedPass, 'depthEdgeStrength').min(0).max(1).step(.05);
+            gui.add(params, 'pixelAlignedPanning');
+
+            // 材质和物体不需要Loader, 但是加载外界资源, 比如使用贴图一定需要Loader
+            const loader = new THREE.TextureLoader();
+
+            const texChecker0 = pixelTexture(loader.load('textures/checker.png'));
+            texChecker0.repeat.set(3, 3);
+
+            const texChecker1 = pixelTexture(loader.load('textures/checker.png'));
+            texChecker1.repeat.set(1.5, 1.5);
+
+            const boxMaterial = new THREE.MeshPhongMaterial({ map: texChecker0 }); // 贴图是直接放在材质里一起加载的
+
+            const boxGeometry0 = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+            const box0 = new THREE.Mesh(boxGeometry0, boxMaterial);
+            box0.castShadow = true;
+            box0.receiveShadow = true;
+            box0.rotation.y = Math.PI / 4;
+            box0.position.set(0, 0.2, 0);
+
+            const boxGeometry1 = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+            const box1 = new THREE.Mesh(boxGeometry1, boxMaterial);
+            box1.castShadow = true; // castShadow在各个模型上均管理: 该模型是否能够产生阴影;
+            box1.receiveShadow = true; // receiveShaow在各个模型上均管理: 该模型是否能够产生阴影;
+            box1.rotation.y = Math.PI / 4;
+            box1.position.set(0, 0.25, 0);
+
+            const planeGeometry = new THREE.PlaneGeometry(2, 2);
+            const planeMaterial = new THREE.MeshPhongMaterial({ map: texChecker0 });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.receiveShadow = true;
+            plane.rotation.x = - Math.PI / 2;
+
+            const crystalGeometry = new THREE.IcosahedronGeometry(0.2);
+            const crystalMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2379cf,
+                emissive: 0x143542, // 发光颜色
+                shininess: 10,
+                specular: 0xffffff
+            });
+            crystal = new THREE.Mesh(crystalGeometry, crystalMaterial);
+            crystal.castShadow = true;
+            crystal.receiveShadow = true;
+
+            scene.add(plane, box0, box1, crystal);
+
+            const ambientLight = new THREE.AmbientLight(0xfffc9c, .5);
+
+            const directionalLight = new THREE.DirectionalLight(0xfffc9c, .5); // 平行光和点光都需要选定目标
+            directionalLight.position.set(100, 100, 100);
+            scene.add(directionalLight.target)
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.set(2048, 2048);
+
+            const spotLight = new THREE.SpotLight(0xff8800, 1, 10, Math.PI / 16, .02, 2);
+            spotLight.position.set(2, 2, 0); // 点光源位置
+            scene.add(spotLight.target);
+            spotLight.target.position.set(0, 0, 0);
+            spotLight.castShadow = true; // 点光源阴影允许
+
+            scene.add(ambientLight, /* directionalLight,  */spotLight);
+        }
+
+        
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const t = clock.getElapsedTime();
+            
+            crystal.material.emissiveIntensity = Math.sin(t * 3) * .5 + .5; // 发光强度变化周期
+            crystal.position.y = .7 + Math.sin(t * 2) * .05;
+            crystal.rotation.y = stopGoEased(t, 2, 4) * 2 * Math.PI;
+            
+            const rendererSize = renderer.getSize(new THREE.Vector2());
+            const aspectRatio = rendererSize.x / rendererSize.y;
+            if (params['pixelAlignedPanning']) {
+                pixelAlignFrustum(camera, aspectRatio, Math.floor(rendererSize.x / params['pixelSize']),
+                    Math.floor(rendererSize.y / params['pixelSize']));
+
+            } else if (camera.left != - aspectRatio || camera.top != 1.0) {
+                camera.left = - aspectRatio;
+                camera.right = - aspectRatio;
+                camera.top = 1.0;
+                camera.bottom = - 1.0;
+                camera.updateProjectionMatrix();
+            }
+            composer.render();
+        }
+        
+        function pixelTexture(texture) { // 网格图案
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
+            texture.generateMipmaps = false;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        function easeInOutCubic(x) {
+            return x ** 2 * 3 - x ** 3 * 2;
+        }
+
+        function linearStep(x, edge0, edge1) {
+            const w = edge1 - edge0;
+            const m = 1 / w;
+            const y0 = - m * edge0;
+            return THREE.MathUtils.clamp(y0 + m * x, 0, 1);
+            /* MathUtils.clamp(
+                 val: 待处理值, 
+                 min: 最小值, 
+                 max: 最大值
+               );
+               将待处理值限制在最大和最小值之间
+            */
+        }
+
+        function stopGoEased(x, downtime, period) {
+
+            const cycle = (x / period) | 0;
+            const tween = x - cycle * period;
+            const linStep = easeInOutCubic(linearStep(tween, downtime, period));
+            return cycle + linStep;
+
+        }
+
+        function pixelAlignFrustum(camera, aspectRatio, pixelsPerScreenWidth, pixelsPerScreenHeight) {
+
+            // 0. Get Pixel Grid Units
+            const worldScreenWidth = ((camera.right - camera.left) / camera.zoom);
+            const worldScreenHeight = ((camera.top - camera.bottom) / camera.zoom);
+            const pixelWidth = worldScreenWidth / pixelsPerScreenWidth;
+            const pixelHeight = worldScreenHeight / pixelsPerScreenHeight;
+
+            // 1. Project the current camera position along its local rotation bases
+            const camPos = new THREE.Vector3(); camera.getWorldPosition(camPos);
+            const camRot = new THREE.Quaternion(); camera.getWorldQuaternion(camRot);
+            const camRight = new THREE.Vector3(1.0, 0.0, 0.0).applyQuaternion(camRot);
+            const camUp = new THREE.Vector3(0.0, 1.0, 0.0).applyQuaternion(camRot);
+            const camPosRight = camPos.dot(camRight);
+            const camPosUp = camPos.dot(camUp);
+
+            // 2. Find how far along its position is along these bases in pixel units
+            const camPosRightPx = camPosRight / pixelWidth;
+            const camPosUpPx = camPosUp / pixelHeight;
+
+            // 3. Find the fractional pixel units and convert to world units
+            const fractX = camPosRightPx - Math.round(camPosRightPx);
+            const fractY = camPosUpPx - Math.round(camPosUpPx);
+
+            // 4. Add fractional world units to the left/right top/bottom to align with the pixel grid
+            camera.left = - aspectRatio - (fractX * pixelWidth);
+            camera.right = aspectRatio - (fractX * pixelWidth);
+            camera.top = 1.0 - (fractY * pixelHeight);
+            camera.bottom = - 1.0 - (fractY * pixelHeight);
+            camera.updateProjectionMatrix();
+
+        }
+    </script>
+</body>
+
+</html>

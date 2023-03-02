@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>ebgl_effcts_anaglyph</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        import { AnaglyphEffect } from './jsm/effects/AnaglyphEffect.js';
+
+        let container, camera, scene, renderer, effect;
+
+        const spheres = [];
+
+        let mouseX = 0; // 鼠标方位X
+        let mouseY = 0; // 鼠标方位Y
+
+        let windowHalfX = window.innerWidth / 2; // window中心坐标X
+        let windowHalfY = window.innerHeight / 2; // window中心坐标Y
+
+        document.addEventListener('mousemove', (event) => { // 计算鼠标相对中心坐标系的位置;
+            mouseX = (event.clientX - windowHalfX) / 100;
+            mouseY = (event.clientY - windowHalfY) / 100;
+        })
+
+        init();
+        animate();
+
+        function init() { // Three.js配置
+            container = document.createElement('div');
+            document.body.appendChild(container); // 创建容器加入场景
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100);
+            // 摄像机视锥体垂直视野角度, 视锥体长宽比, 视锥体近端面, 视锥体远端面
+            // 垂直视野角度:以摄像机镜头为圆心, 从视图底部向视图顶部作弧得到的角度
+            // 视锥体长宽比: 通常直接使用"画布宽/画布高"
+            // 近端面&远端面: 从镜头射出垂直于镜头的射线, 在多远处垂直于该线作面为近端面和远端面
+
+            camera.position.z = 3;
+            camera.focalLength = 3;
+
+            const path = 'textures/cube/pisa/';
+            const format = '.png';
+            const urls = [ // 拼接贴图路径
+                path + 'px' + format, path + 'nx' + format, // textures/cube/pisa/px.png, textures/cube/pisa/nx.png
+                path + 'py' + format, path + 'ny' + format, // textures/cube/pisa/py.png, textures/cube/pisa/ny.png
+                path + 'pz' + format, path + 'nz' + format // textures/cube/pisa/pz.png, textures/cube/pisa/nz.png
+            ]
+
+            const textureCube = new THREE.CubeTextureLoader().load(urls)
+            // CubeTextureLoader是用于加载Cube贴图的一个类, 第一个参数必须传一个长度为6的贴图路径数组
+            // 把贴图图片合成为一张可以使用的贴图;
+
+            scene = new THREE.Scene(); // 创建threejs场景, 只有场景内的东西会被threejs渲染, 所以所有需要渲染的东西得先加入场景再渲染
+            scene.background = textureCube; // 设置场景贴图为CubeTextureLoader合成的贴图, 场景在渲染时会优先渲染背景(如果scene.background不为空的话);
+
+            const geometry = new THREE.SphereGeometry(0.1, 32, 16);
+            const material = new THREE.MeshBasicMaterial({ color: 0xffffff, envMap: textureCube });
+
+            for (let i = 0; i < 500; i++) {
+                const mesh = new THREE.Mesh(geometry, material);
+
+                mesh.position.x = Math.random() * 10 - 5;
+                mesh.position.y = Math.random() * 10 - 5;
+                mesh.position.z = Math.random() * 10 - 5;
+
+                mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+                scene.add(mesh);
+
+                spheres.push(mesh);
+            }
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio(window.devicePixelRatio) // 设置像素比为当前设备像素比, 避免HiDPI设备(分辨率很高, 每英寸包含更多像素点的设备)下出现绘图模糊的情况
+            container.appendChild(renderer.domElement); // renderer.domElemen一张canvas画布, 加入container内
+
+            const width = window.innerWidth || 2;
+            const height = window.innerHeight || 2;
+
+            effect = new AnaglyphEffect(renderer); // 从jsm引入的, 不知道是什么东西;
+            effect.setSize(width, height);
+
+            window.addEventListener('resize', () => {
+                windowHalfX = window.innerWidth / 2;
+                windowHalfY = window.innerHeight / 2;
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                effect.setSize(window.innerWidth, window.innerHeight);
+
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            render();
+        }
+
+        function render() {
+            const timer = 0.0001 * Date.now();
+
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (- mouseY - camera.position.y) * 0.05;
+
+            camera.lookAt(scene.position);
+
+            for (let i = 0, il = spheres.length; i < il; i++) {
+
+                const sphere = spheres[i];
+
+                sphere.position.x = 5 * Math.cos(timer + i);
+                sphere.position.y = 5 * Math.sin(timer + i * 1.1);
+
+            }
+            effect.render(scene, camera);
+        }
+    </script>
+
+</body>
+
+</html>

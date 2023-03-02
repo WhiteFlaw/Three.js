@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>ebgl_effcts_anaglyph</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        import { AnaglyphEffect } from './jsm/effects/AnaglyphEffect.js';
+
+        let container, camera, scene, renderer, effect
+
+        let mouseX = 0, mouseY = 0;
+
+        let spheres = [];
+
+        let windowHalfX = window.innerWidth / 2;
+        let windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) / 100;
+            mouseY = (event.clientY - windowHalfY) / 100;
+        })
+
+        init();
+        animate();
+
+        /* 
+        需要划定一个场景作为THREE的渲染区域, 场景需要场景贴图, 用loader合成场景贴图加到场景的background
+        要有一个相机来才能看到场景.
+        场景里一般需要, 模型由物体和贴图组成, 大量物体可以for随机生成, Sphere三角网格物体用的比较多
+        如果有物体, 那一般需要贴图, 贴图load之后需要loader合成贴图, Mesh将物体和贴图合成模型
+        然后得有个渲染器renderer去把场景和里面的东西渲染出来, 渲染器有默认配置, 可以不传参数, 可以给渲染器做一些处理返回处理过的渲染器effect, 然后后面需要操作渲染器的时候直接操作effect(effect依旧具备渲染器方法和属性, 只是渲染出来会有特殊效果).
+        THREE配置全在init里完成
+        animate启动后内部的requestAnimationFrame不断契合屏幕刷新率调自己, 顺带调render, render每次调用都根据当前的状态(比如鼠标位置)重新生成视图(调整camera和物体位置等), 并在最后重新render, 
+        */
+        function init() {
+            container = document.createElement('div');
+            document.body.appendChild(container);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.01, 100); // 相机
+
+            let urls = ['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']; // 场景 & 场景贴图
+            let backgroundTexture = new THREE.CubeTextureLoader().setPath('textures/cube/pisa/').load(urls);
+            scene = new THREE.Scene();
+            scene.background = backgroundTexture;
+
+            const geometry = new THREE.SphereGeometry(0.1, 32, 16); // 物体
+            let material = new THREE.MeshBasicMaterial({ // 材质
+                color: 0xffffff,
+                envMap: backgroundTexture
+            })
+
+            for (let i = 0; i < 500; i++) {
+                let mesh = new THREE.Mesh(geometry, material); // 合成500个模型;
+
+                mesh.position.x = Math.random() * 10 - 5;
+                mesh.position.y = Math.random() * 10 - 5;
+                mesh.position.z = Math.random() * 10 - 5;
+
+                scene.add(mesh);
+                spheres.push(mesh);
+            }
+
+            renderer = new THREE.WebGLRenderer(); // 渲染器
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const width = window.innerWidth || 2;
+            const height = window.innerHeight || 2;
+            effect = new AnaglyphEffect(renderer); // 从jsm引入的, 不知道是什么东西;
+            effect.setSize(width, height);
+
+            window.addEventListener('resize', () => {
+                windowHalfX = window.innerWidth / 2;
+                windowHalfY = window.innerHeight / 2;
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                effect.setSize(window.innerWidth, window.innerHeight);
+
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            render();
+        }
+
+        function render() {
+            const timer = 0.0001 * Date.now();
+
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (mouseY - camera.position.y) * 0.05;
+
+            camera.lookAt(scene.position);
+
+            for (let i = 0; i < spheres.length; i++) {
+                const sphere = spheres[i];
+
+                sphere.position.x = 5 * Math.cos(timer + i);
+                sphere.position.y = 5 * Math.sin(timer + i * 1.1);
+            }
+            effect.render(scene, camera);
+        }
+    </script>
+
+</body>
+
+</html>
