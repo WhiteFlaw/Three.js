@@ -63,7 +63,7 @@
             controls.maxzoom = 2;
 
             composer = new EffectComposer(renderer); // 后期效果处理器, 需要addPass一种实例化过的后期效果
-            const renderPixelatedPass = new RenderPixelatedPass(3, scene, camera); // 实例化一种后期效果
+            const renderPixelatedPass = new RenderPixelatedPass(1, scene, camera); // 实例化一种后期效果
             composer.addPass(renderPixelatedPass);
         }
 
