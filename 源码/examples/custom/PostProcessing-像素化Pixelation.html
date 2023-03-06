@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>PostProcessing-像素化pixelation</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="../main.css">
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+		{
+			"imports": {
+				"three": "../../build/three.module.js",
+				"three/addons/": "../jsm/"
+			}
+		}
+	</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPixelatedPass } from 'three/addons/postprocessing/RenderPixelatedPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        let camera, scene, renderer, composer, crystalMesh, clock;
+        let gui, params;
+
+        init();
+        animate();
+
+        function init() {
+            const aspectRatio = window.innerWidth / window.innerHeight; // 纵横比
+
+            // 正交相机
+            camera = new THREE.OrthographicCamera(- aspectRatio, aspectRatio, 1, - 1, 0.1, 10);
+            camera.position.y = 2 * Math.tan(Math.PI / 6); // 正交相机y轴向位移
+            camera.position.z = 2; // 正交相机z轴向位移
+
+            // 场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x151729); // 场景颜色
+
+            // 时间对象
+            clock = new THREE.Clock();
+
+            // 渲染器
+            renderer = new THREE.WebGLRenderer();
+            renderer.shadowMap.enabled = true;// 允许场景中使用阴影贴图
+            renderer.setSize(window.innerWidth, window.innerHeight);// 设置渲染区域
+            document.body.appendChild(renderer.domElement);
+
+            // 效果合成器
+            // EffectComposer( renderer: 渲染器, renderTarget: (可选)渲染目标 )
+            composer = new EffectComposer(renderer); // 效果合成器对象把各种后期效果合成到一起, 效果合成器具备'通道'的概念, 每个通道处理一种后期效果
+            const renderPixelatedPass = new RenderPixelatedPass(4, scene, camera); // postprocessing pixelate: 后期处理: 像素化
+            composer.addPass(renderPixelatedPass); // 增加像素化后期效果到一条通道中, 最后多个通道的效果合成
+            // 合成器对效果的处理存在顺序, 先加入通道的将会先处理
+
+            // 相机围绕
+            const controls = new OrbitControls(camera, renderer.domElement); // 轨道控制器, 相机可以围绕物体运动
+            controls.maxzoom = 2;
+
+            // GUI
+            gui = new GUI();
+            params = { pixelSize: 6, normalEdgeStrength: 0.3, depthEdgeStrength: 4, pixelAlignedPanning: true };
+            gui.add(params, 'pixelSize').min(1).max(16).step(1).onChange(() => {
+                renderPixelatedPass.setPixelSize(params.pixelSize);
+            })
+            gui.add(renderPixelatedPass, 'normalEdgeStrength').min(0).max(2).step(.05);
+            gui.add(renderPixelatedPass, 'depthEdgeStrength').min(0).max(1).step(.05);
+            gui.add(params, 'pixelAlignedPanning');
+
+            const loader = new THREE.TextureLoader();
+
+            // 贴图: 平面
+            const texChecker = pixelTexture(loader.load('../textures/checker.png'));
+            texChecker.repeat.set(3, 3);
+
+            // 贴图: 立方体
+            const texChecker2 = pixelTexture(loader.load('../textures/checker.png'));
+            texChecker2.repeat.set(1.5, 1.5);
+
+            // 材质: 立方体
+            const boxMaterial = new THREE.MeshPhongMaterial({ map: texChecker2 });
+
+            // 模型: 立方体小
+            const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), boxMaterial); // 小盒模型
+            mesh1.castShadow = true; // 产生阴影允许
+            mesh1.receiveShadow = true; // 呈现阴影允许
+            mesh1.rotation.y = Math.PI / 4; // 绕x轴旋转
+            mesh1.position.set(0, 0.2001, 0); // 模型位置
+            scene.add(mesh1);
+
+            // 模型: 立方体大
+            const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, -0.5, -0.5), boxMaterial);
+            mesh2.castShadow = true; // 产生阴影允许
+            mesh2.receiveShadow = true; // 呈现阴影允许
+            mesh2.rotation.y = Math.PI / 4; // 绕y轴旋转
+            mesh2.position.set(0.5, 0.2501, -0.5); // 模型位置
+            scene.add(mesh2);
+
+            // 物体: 平面
+            const planeGeometry = new THREE.PlaneGeometry(2, 2);
+            // 材质: 平面
+            const planeMaterial = new THREE.MeshPhongMaterial({ map: texChecker });
+            // 模型: 平面
+            const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+            planeMesh.receiveShadow = true; // 呈现阴影允许
+            planeMesh.rotation.x = - Math.PI / 2; // 绕x轴旋转
+            scene.add(planeMesh);
+
+            // 物体: 水晶
+            const radius = .2;
+            const crystalGeometry = new THREE.IcosahedronGeometry(radius);
+            // 材质:水晶
+            const crystalMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2379cf,
+                emissive: 0x143542,
+                shininess: 10,
+                specular: 0xffffff
+            })
+            // 模型: 水晶
+            crystalMesh = new THREE.Mesh(crystalGeometry, crystalMaterial);
+            crystalMesh.receiveShadow = true;
+            crystalMesh.castShadow = true;
+            scene.add(crystalMesh);
+
+            // 环境光
+            const ambientLight = new THREE.DirectionalLight(0xfffc9c, .5);
+            // 环境光不需要设置光源位置
+            scene.add(ambientLight);
+
+            // 平行光
+            const directionalLight = new THREE.DirectionalLight(0xfffc9c, .5);
+            directionalLight.position.set(100, 100, 100); // 平行光光源位置
+            directionalLight.castShadow = true; // castShadow属性值为true, 平行光会产生阴影
+            directionalLight.shadow.mapSize.set(2048, 2048);
+            scene.add(directionalLight);
+
+            // 点光源
+            const spotLight = new THREE.SpotLight(0xff8800, 1, 10, Math.PI / 16, .02, 2);
+            spotLight.position.set(2, 2, 0); // 点光源位置
+            scene.add(spotLight.target);
+            spotLight.target.position.set(0, 0, 0);
+            spotLight.castShadow = true; // 点光源阴影允许
+            scene.add(spotLight);
+        }
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            const t = clock.getElapsedTime();
+
+            crystalMesh.material.emissiveIntensity = Math.sin(t * 3) * .5 + .5;
+            crystalMesh.position.y = .7 + Math.sin(t * 2) * .05;
+            crystalMesh.rotation.y = stopGoEased(t, 2, 4) * 2 * Math.PI;
+
+            const rendererSize = renderer.getSize(new THREE.Vector2());
+            const aspectRatio = rendererSize.x / rendererSize.y;
+            if (params['pixelAlignedPanning']) {
+                pixelAlignFrustum(camera, aspectRatio, Math.floor(rendererSize.x / params['pixelSize']),
+                    Math.floor(rendererSize.y / params['pixelSize']));
+
+            } else if (camera.left != - aspectRatio || camera.top != 1.0) {
+
+                // Reset the Camera Frustum if it has been modified
+                camera.left = - aspectRatio;
+                camera.right = - aspectRatio;
+                camera.top = 1.0;
+                camera.bottom = - 1.0;
+                camera.updateProjectionMatrix();
+
+            }
+
+            composer.render(); // renderer已经传进合成器, composer的render属性解释为为内部渲染器的引用, 可见其内部具备渲染器
+
+        }
+
+        function pixelTexture(texture) {
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.NearestFilter;
+            texture.generateMipmaps = false;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        function easeInOutCubic(x) {
+            return x ** 2 * 3 - x ** 3 * 2;
+        }
+
+        function linearStep(x, edge0, edge1) {
+            const w = edge1 - edge0;
+            const m = 1 / w;
+            const y0 = - m * edge0;
+            return THREE.MathUtils.clamp(y0 + m * x, 0, 1);
+            /* MathUtils.clamp(
+                 val: 待处理值, 
+                 min: 最小值, 
+                 max: 最大值
+               );
+               将待处理值限制在最大和最小值之间
+            */
+        }
+
+        function stopGoEased(x, downtime, period) {
+
+            const cycle = (x / period) | 0;
+            const tween = x - cycle * period;
+            const linStep = easeInOutCubic(linearStep(tween, downtime, period));
+            return cycle + linStep;
+
+        }
+
+        function pixelAlignFrustum(camera, aspectRatio, pixelsPerScreenWidth, pixelsPerScreenHeight) {
+
+            // 0. Get Pixel Grid Units
+            const worldScreenWidth = ((camera.right - camera.left) / camera.zoom);
+            const worldScreenHeight = ((camera.top - camera.bottom) / camera.zoom);
+            const pixelWidth = worldScreenWidth / pixelsPerScreenWidth;
+            const pixelHeight = worldScreenHeight / pixelsPerScreenHeight;
+
+            // 1. Project the current camera position along its local rotation bases
+            const camPos = new THREE.Vector3(); camera.getWorldPosition(camPos);
+            const camRot = new THREE.Quaternion(); camera.getWorldQuaternion(camRot);
+            const camRight = new THREE.Vector3(1.0, 0.0, 0.0).applyQuaternion(camRot);
+            const camUp = new THREE.Vector3(0.0, 1.0, 0.0).applyQuaternion(camRot);
+            const camPosRight = camPos.dot(camRight);
+            const camPosUp = camPos.dot(camUp);
+
+            // 2. Find how far along its position is along these bases in pixel units
+            const camPosRightPx = camPosRight / pixelWidth;
+            const camPosUpPx = camPosUp / pixelHeight;
+
+            // 3. Find the fractional pixel units and convert to world units
+            const fractX = camPosRightPx - Math.round(camPosRightPx);
+            const fractY = camPosUpPx - Math.round(camPosUpPx);
+
+            // 4. Add fractional world units to the left/right top/bottom to align with the pixel grid
+            camera.left = - aspectRatio - (fractX * pixelWidth);
+            camera.right = aspectRatio - (fractX * pixelWidth);
+            camera.top = 1.0 - (fractY * pixelHeight);
+            camera.bottom = - 1.0 - (fractY * pixelHeight);
+            camera.updateProjectionMatrix();
+
+        }
+    </script>
+</body>
+
+</html>

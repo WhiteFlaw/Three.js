@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Effects-立体相机Stereo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="../main.css">
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../../build/three.module.js"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        import { StereoEffect } from '../jsm/effects/StereoEffect.js';
+
+        let container, camera, scene, renderer, effect;
+        // 填充变量的顺序和声明顺序相同的
+
+        let mouseX = 0, mouseY = 0;
+        
+        const spheres = [];
+
+        let windowHalfX = window.innerWidth / 2;
+        let windowHalfY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = event.clientX - windowHalfX;
+            mouseY = event.clientY - windowHalfY;
+        })
+
+        init();
+        animate();
+
+        function init() {
+            container = document.createElement('div');
+            document.body.appendChild(container);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+            camera.position.z = 3200;
+
+            const backgroundUrls = ['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg']
+            const textureBackground = new THREE.CubeTextureLoader().setPath('../textures/cube/Park3Med/').load(backgroundUrls);
+            scene = new THREE.Scene();
+            scene.background = textureBackground
+
+            const cubeUrls = ['px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg'];
+            const textureCube = new THREE.CubeTextureLoader().setPath('../textures/cube/Park3Med/').load(cubeUrls);
+            textureCube.mapping = THREE.CubeRefractionMapping;
+
+            const geometry = new THREE.SphereGeometry(100, 32, 16);
+
+            const material = new THREE.MeshBasicMaterial({ // 基础网格材质, 无需光照
+                color: 0xffffff, // 贴图颜色
+                envMap: textureCube, // 环境贴图
+                refractionRatio: 0.95 // 空气折射率
+            });
+
+            for (let i = 0; i < 500; i++) {
+                const mesh = new THREE.Mesh(geometry, material); // Mesh是一个描述基于三角形网格的物体的类, 参数1应为描述物体结构的BufferGeometry实例, 参2应为一个材质实例
+                // 此处Mesh使用物体和材质创建一个新的模型
+                mesh.position.x = Math.random() * 10000 - 5000;
+                mesh.position.y = Math.random() * 10000 - 5000;
+                mesh.position.z = Math.random() * 10000 - 5000;
+                mesh.scale.x = mesh.scale.y = mesh.scale.z = Math.random() * 3 + 1;
+                scene.add(mesh);
+
+                spheres.push(mesh);
+            }
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio(window.devicePixelRatio); // 设置像素比为当前设备像素比, 避免高分辨率情况下出现绘图模糊情况;
+            container.appendChild(renderer.domElement);
+
+            effect = new StereoEffect(renderer);
+            effect.setSize(window.innerWidth, window.innerHeight);
+
+            window.addEventListener('onresize', () => {
+                windowHalfX = window.innerWidth / 2;
+                windowHalfY = window.innerHeight / 2;
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                effect.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            render();
+        }
+
+        function render() {
+            const timer = 0.0001 * Date.now();
+
+            camera.position.x += (mouseX - camera.position.x) * 0.05; // camera横向始终为鼠标位置与camera的差值*0.05;
+            camera.position.y += (mouseY - camera.position.y) * 0.05; // camera纵向始终为鼠标位置与camera的差值*0.05;
+            camera.lookAt(scene.position); // 镜头位置变化, 镜头始终看向场景中央
+
+            for (let i = 0, il = spheres.length; i < il; i++) {
+                const sphere = spheres[i]; // for规定每个球的属性
+                sphere.position.x = 5000 * Math.cos(timer + i);
+                sphere.position.y = 5000 * Math.sin(timer + i * 1.1);
+
+            }
+            effect.render(scene, camera);
+        }
+    </script>
+
+</body>
+
+</html>
