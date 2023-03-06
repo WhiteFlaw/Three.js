@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreeJS</title>
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+
+<body>
+    <script>
+        import * as THREE from 'three';  //可以直接使用npm对"three.js"进行安装， 但是引入的时候还是要引入"three";
+        import { DoubleSide } from 'three';
+
+        //导入轨道控制器, 使得相机可以围绕目标进行运动
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+
+        //创建场景
+        const scene = new THREE.Scene();
+
+        //创建相机
+        const carema = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        //设置相机位置
+        carema.position.set(0, 0, 20);
+
+        //加入相机到场景
+        scene.add(carema);
+
+        //创建几何体
+        const geometry = new THREE.SphereGeometry(3, 30, 30);  //xyz111的正方体
+        const planeGometry = new THREE.PlaneBufferGeometry(5, 5, 800, 800);
+
+        //导入贴图
+        const haokangde = require("../assets/haokangde.png");
+        const haokangde2 = require("../assets/haokangde2.png");
+
+        //声明贴图加载器
+        const textureLoader = new THREE.TextureLoader();
+
+        //声明贴图
+        const texture = textureLoader.load(haokangde);
+
+        //导入置换贴图
+        const texture2 = textureLoader.load(haokangde2);
+
+        //material = new THREE.MeshBasicMaterial( { color: 0x049EF4 } );
+        const material = new THREE.MeshStandardMaterial({
+            //color: 0x049EF4,  //color值不能加引号, 不然会渲染默认白
+            map: texture,
+            side: THREE.DoubleSide,  //不加THREE.DoubleSide只会渲染单面
+            displacementMap: texture2,   //位移贴图, 原理好像也是黑白度操作
+            displacementScale: 0.2,    //位移贴图根据黑白程度的凸出量, 值越大越突出
+            displacementBias: 2,     //位移贴图在网格顶点上的偏移量
+            //side: THREE.DoubleSide
+            roughness: 0.5,    //粗糙度, 默认1.0, 越小越光滑
+            roughnessMap: texture2  //提供的这个纹理, 它的绿色通道用于改变material的粗糙度
+        });
+        //位移贴图displacementMap根据图像黑白程度来移动模型顶点, 决定凹凸, 越白越凸
+
+        const mesh = new THREE.Mesh(geometry, material);
+        const plane = new THREE.Mesh(planeGometry, material);
+        scene.add(plane);
+        //scene.add(mesh);
+
+        plane.position.set(10, 0, 0);
+
+        //直线光源
+        //平行光, 可以投射阴影, 但只平行光的话照不到的地方都是黑的
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(0, 10, 10);//xyz
+        scene.add(directionalLight);
+
+        //声明构造器(渲染器): WebGLRenderer, 渲染器会渲染出一个画布
+        const renderer = new THREE.WebGLRenderer();
+
+        //设置渲染尺寸
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        //将渲染完的canvas内容添加到body
+        document.body.appendChild(renderer.domElement)
+
+        //创建轨道控制器
+        const controls = new OrbitControls(carema, renderer.domElement);
+
+        //声明坐标系（非必须）
+        const axeHelper = new THREE.AxesHelper('20');  //传入坐标轴长度， Str,num均可
+
+        //将坐标系添加到场景
+        scene.add(axeHelper);
+
+        function render() {   //调用render()进行重渲染
+            requestAnimationFrame(render);
+            renderer.render(scene, carema);
+        }
+
+        render();
+
+        window.addEventListener('resize', () => {
+            //更新相机锥体视区长宽比
+            carema.aspect = window.innerWidth / window.innerHeight;
+
+            //手动更新相机的投影矩阵(重新计算投影矩阵), 相机对象的投影矩阵相关属性变化后，再重新计算相机投影矩阵值, 否则会造成资源浪费
+            carema.updateProjectionMatrix();
+
+            //更新渲染器
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            //设置渲染器的像素比
+            renderer.setPixelRatio(window.devicePixelRatio);
+        })
+    </script>
+</body>
+
+</html>

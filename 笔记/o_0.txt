@@ -1,0 +1,11 @@
+通过事件监听
+触发运动事件, 给模型加动画, 设置模型位置开始变化, 如果起步有加速度可以增加上限
+
+射击事件触发后通过模型位置和朝向计算射出位置, 创建模型到该位置然后射出
+mixer = new THREE.AnimationMixer(gltf.scene);
+mixer.clipAction(gltf.animations[0]).play();
+scene.add(gltf.scene);
+
+但是是否命中需要增加碰撞反馈逻辑
+
+翻滚触发后增加翻滚动作并且产生位移
