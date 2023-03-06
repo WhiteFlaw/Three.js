@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Loader-Gltf/Transmission</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+        let container;
+        let camera, scene, renderer, controls, clock, mixer;
+
+        init();
+        animate();
+
+        function init() {
+            clock = new THREE.Clock();
+
+            container = document.createElement('div');
+            document.body.appendChild(container);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.25, 20);
+            camera.position.set(0, 0.4, 0.7);
+
+            scene = new THREE.Scene();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping; // 渲染器常量, 此处为一种控制色调映射的常量
+            renderer.toneMappingExposure = 1;
+            renderer.outputEncoding = THREE.sRGBEncoding; // 常量, 此处为一种规定纹理格式的常量
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.minDistance = 0.5;
+            controls.maxDistance = 1;
+            controls.target.set(0, 0.1, 0);
+            controls.update();
+
+            const rgbeLoader = new RGBELoader();
+            rgbeLoader.setPath('textures/equirectangular/')
+                .load('royal_esplanade_1k.hdr', function (texture) {
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    scene.background = texture;
+                    scene.environment = texture;
+                })
+
+            const dracoLoader = new DRACOLoader().setDecoderPath('jsm/libs/draco/gltf/');
+
+            const gltfLoader = new GLTFLoader();
+            gltfLoader.setPath('models/gltf/')
+                .setDRACOLoader(dracoLoader);
+
+            gltfLoader.load('IridescentDishWithOlives.glb', function (gltf) {
+                mixer = new THREE.AnimationMixer(gltf.scene);
+                mixer.clipAction(gltf.animations[0]).play();
+                scene.add(gltf.scene);
+            })
+        }
+
+        function animate() {
+            requestAnimationFrame(animate)
+            if (mixer) mixer.update(clock.getDelta());
+            controls.update();
+            render();
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+    </script>
+
+</body>
+
+</html>

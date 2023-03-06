@@ -4,7 +4,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/orbitcontrols';
 import { Water } from 'three/examples/jsm/objects/Water';
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from 'three/examples/jsm/loaders/dracoloader';
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import * as dat from "dat.gui";
 const gui = new dat.GUI();
 const scene = new THREE.Scene();
@@ -94,7 +93,7 @@ dracoLoader.setDecoderPath("./draco/");
 
 loader.setDRACOLoader(dracoLoader);
 
-loader.load("./model/island2.glb", (gltf) => {
+loader.load("./model/untitled.glb", (gltf) => {
     scene.add(gltf.scene);
     gltf.scene.scale.set(30, 30, 30);
     gltf.scene.rotation.set(0, 7.5, -0.1);
