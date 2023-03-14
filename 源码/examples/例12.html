@@ -23,50 +23,54 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from './jsm/controls/OrbitControls.js';
-        import { GLTFLoader } from "./jsm/loaders/GLTFLoader.js";
+        import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
         import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
 
         const scene = new THREE.Scene();
 
         /////////////////////////////////////////////////////////camera
         const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            2000
+        	75,
+        	window.innerWidth / window.innerHeight,
+        	0.1,
+        	2000
         );
 
-        camera.position.set(-380, 250, 750);
-        camera.aspect = window.innerWidth / window.innerHeight
+        camera.position.set( - 380, 250, 750 );
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
 
-        scene.add(camera);
+        scene.add( camera );
         /////////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////renderer
-        const renderer = new THREE.WebGLRenderer({
-            antialias: true
-        })
+        const renderer = new THREE.WebGLRenderer( {
+        	antialias: true
+        } );
 
-        renderer.outputEncoding = THREE.sRGBEncoding;  ///???????
+        renderer.outputEncoding = THREE.sRGBEncoding; ///???????
 
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
         ////////////////////////////////////////////////////////////////////
 
-        window.addEventListener('resize', function () {
-            camera.aspect = window.innerWidth / window.innerHeight
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        })
+        window.addEventListener( 'resize', function () {
 
-        const controls = new OrbitControls(camera, renderer.domElement);
+        	camera.aspect = window.innerWidth / window.innerHeight;
+        	camera.updateProjectionMatrix();
+        	renderer.setSize( window.innerWidth, window.innerHeight );
+
+} );
+
+        const controls = new OrbitControls( camera, renderer.domElement );
 
         /////////////////////////////////////////////////////////////render
         function render() {
-            renderer.render(scene, camera);
-            requestAnimationFrame(render);
-        }
+
+        	renderer.render( scene, camera );
+        	requestAnimationFrame( render );
+
+}
 
         render();
         //////////////////////////////////////////////////////////////////
@@ -75,33 +79,35 @@
 
         const dracoLoader = new DRACOLoader();
 
-        dracoLoader.setDecoderPath("./draco/");
+        dracoLoader.setDecoderPath( './draco/' );
 
-        loader.setDRACOLoader(dracoLoader);
+        loader.setDRACOLoader( dracoLoader );
 
-        loader.load("./models/gltf/ruin.glb", (gltf) => {
-            scene.add(gltf.scene);
-            // gltf.scene.scale.set(30, 30, 30);
-            // gltf.scene.rotation.set(0, 7.5, -0.1);
-            // gltf.scene.castShadow = true;
-        })
+        loader.load( './models/gltf/ruin.glb', ( gltf ) => {
+
+        	scene.add( gltf.scene );
+        	// gltf.scene.scale.set(30, 30, 30);
+        	// gltf.scene.rotation.set(0, 7.5, -0.1);
+        	// gltf.scene.castShadow = true;
+
+} );
 
 
-        const light = new THREE.AmbientLight(0xffffff, 0.1);
-        scene.add(light);
+        const light = new THREE.AmbientLight( 0xffffff, 0.1 );
+        scene.add( light );
 
-        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 2);
+        const directionalLight1 = new THREE.DirectionalLight( 0xffffff, 2 );
 
-        directionalLight1.position.set(0, 0, -300);
+        directionalLight1.position.set( 0, 0, - 300 );
         directionalLight1.castShadow = true;
 
-        scene.add(directionalLight1);
+        scene.add( directionalLight1 );
 
-        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+        const directionalLight2 = new THREE.DirectionalLight( 0xffffff, 0.5 );
 
-        directionalLight2.position.set(-300, 0, -100);
+        directionalLight2.position.set( - 300, 0, - 100 );
 
-        scene.add(directionalLight2);
+        scene.add( directionalLight2 );
 
     </script>
 

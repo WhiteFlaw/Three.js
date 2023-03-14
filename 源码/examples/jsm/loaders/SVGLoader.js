@@ -218,6 +218,8 @@ class SVGLoader extends Loader {
 
 			const d = node.getAttribute( 'd' );
 
+			if ( d === '' || d === 'none' ) return null;
+
 			// console.log( d );
 
 			const commands = d.match( /[a-df-z][^a-df-z]*/ig );
@@ -866,7 +868,7 @@ class SVGLoader extends Loader {
 
 			}
 
-			const regex = /(-?[\d\.?]+)[,|\s](-?[\d\.?]+)/g;
+			const regex = /([+-]?\d*\.?\d+(?:e[+-]?\d+)?)(?:,|\s)([+-]?\d*\.?\d+(?:e[+-]?\d+)?)/g;
 
 			const path = new ShapePath();
 
@@ -901,7 +903,7 @@ class SVGLoader extends Loader {
 
 			}
 
-			const regex = /(-?[\d\.?]+)[,|\s](-?[\d\.?]+)/g;
+			const regex = /([+-]?\d*\.?\d+(?:e[+-]?\d+)?)(?:,|\s)([+-]?\d*\.?\d+(?:e[+-]?\d+)?)/g;
 
 			const path = new ShapePath();
 
