@@ -32,156 +32,179 @@
         animate();
 
         function init() {
-            container = document.createElement('div');
-            document.body.appendChild(container);
 
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x505050);
+        	container = document.createElement( 'div' );
+        	document.body.appendChild( container );
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-            camera.position.set();
+        	scene = new THREE.Scene();
+        	scene.background = new THREE.Color( 0x505050 );
 
-            clock = new THREE.Clock();
+        	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+        	camera.position.x = - 4;
+	        camera.position.z = 4;
+	        camera.position.y = 2;
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.physicallyCorrectLights = true;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            container.appendChild(renderer.domElement);
+        	clock = new THREE.Clock();
 
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.minDistance = 1;
-            controls.maxDistance = 20;
+        	renderer = new THREE.WebGLRenderer( { antialias: true } );
+        	renderer.setPixelRatio( window.devicePixelRatio );
+        	renderer.setSize( window.innerWidth, window.innerHeight );
+        	renderer.shadowMap.enabled = true;
+        	renderer.useLegacyLights = false;
+        	renderer.outputEncoding = THREE.sRGBEncoding;
+        	container.appendChild( renderer.domElement );
 
-            const textureLoader = new THREE.TextureLoader();
+        	controls = new OrbitControls( camera, renderer.domElement );
+        	controls.minDistance = 1;
+        	controls.maxDistance = 20;
 
-            const planeGeometry = new THREE.PlaneGeometry(20, 20);
-            const planeMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                roughness: 0.8,
-                metalness: 0.2,
-                bumpScale: 0.5
-            })
-            textureLoader.load('textures/hardwood2_diffuse.jpg', function (map) {
-                map.wrapS = THREE.repeatWrapping;
-                map.wrapT = THREE.repeatWrapping;
-                map.anisotropy = 4;
-                map.repeat.set(10, 24);
-                map.encoding = THREE.sRGBEncoding;
-                planeMaterial.map = map;
-                planeMaterial.needsUpdate = true;
-            })
-            textureLoader.load('textures/hardwood2_bump.jpg', function (map) {
-                map.wrapS = THREE.repeatWrapping;
-                map.wrapT = THREE.repeatWrapping;
-                map.anisotropy = 4;
-                map.repeat.set(10, 24);
-                planeMaterial.bumpMap = map;
-                planeMaterial.needsUpdate = true;
-            })
-            textureLoader.load('textures/hardwood2_roughness.jpg', function (map) {
-                map.wrapS = THREE.RepeatWrapping;
-                map.wrapT = THREE.RepeatWrapping;
-                map.anisotropy = 4;
-                map.repeat.set(10, 24);
-                planeMaterial.roughnessMap = map; // 
-                planeMaterial.needsUpdate = true;
-            })
-            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-            plane.receiveShadow = true;
-            plane.rotation.x = - Math.PI / 2.0;
-            scene.add(plane);
+        	const textureLoader = new THREE.TextureLoader();
 
-            const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const boxMaterial = new THREE.MeshStandardMaterial({
-                roughness: 0.7,
-                color: 0xffffff,
-                bumpScale: 0.002,
-                metalness: 0.2
-            })
-            textureLoader.load('textures/brick_diffuse.jpg', function (map) {
-                map.wrapS = THREE.repeatWrapping;
-                map.wrapT = THREE.repeatWrapping;
-                map.anisotropy = 4;
-                map.repeat.set(1, 1);
-                map.encoding = THREE.sRGBEncoding,
-                boxMaterial.map = map;
-                boxMaterial.needsUpdate = true;
-            })
-            textureLoader.load('textures/brick_bump.jpg', function (map) {
-                map.wrapS = THREE.repeatWrapping;
-                map.wrapT = THREE.repeatWrapping;
-                map.anisotropy = 4;
-                map.repeat.set(1, 1);
-                map.encoding = THREE.sRGBEncoding,
-                boxMaterial.bumpMap = map;
-                boxMaterial.needsUpdate = true;
-            })
-            const box0 = new THREE.Mesh(boxGeometry, boxMaterial);
-            box0.position.set(-0.5, 0.25, -1);
-            box0.castShadow = true;
-            scene.add(box0);
-            const box1 = new THREE.Mesh(boxGeometry, boxMaterial);
-            box1.position.set(-0.5, 0.25, -1);
-            box1.castShadow = true;
-            scene.add(box1);
-            const box2 = new THREE.Mesh(boxGeometry, boxMaterial);
-            box2.position.set(-0.5, 0.25, -1);
-            box2.castShadow = true;
-            scene.add(box2);
+        	const planeGeometry = new THREE.PlaneGeometry( 20, 20 );
+        	const planeMaterial = new THREE.MeshStandardMaterial( {
+        		color: 0xffffff,
+        		roughness: 0.8,
+        		metalness: 0.2,
+        		bumpScale: 0.5
+        	} );
+        	textureLoader.load( 'textures/hardwood2_diffuse.jpg', function ( map ) {
 
-            const ballGeometry = new THREE.SphereGeometry(0.25, 32, 32);
-            const ballMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                roughness: 0.5,
-                metalness: 1.0
-            });
-            textureLoader.load('textures/planets/earth_atmos_2048.jpg', function (map) {
-                map.anisotropy = 4;
-                map.encoding = THREE.sRGBEncoding;
-                ballMaterial.map = map;
-                ballMaterial.needsUpdate = true;
-            });
-            textureLoader.load('textures/planets/earth_specular_2048.jpg', function (map) { // 这个球不需要凹凸/粗糙度贴图
-                map.anisotropy = 4;
-                map.encoding = THREE.sRGBEncoding;
-                ballMaterial.metalnessMap = map;
-                ballMaterial.needsUpdate = true;
-            });
+        		map.wrapS = THREE.RepeatWrapping;
+        		map.wrapT = THREE.RepeatWrapping;
+        		map.anisotropy = 4;
+        		map.repeat.set( 10, 24 );
+        		map.encoding = THREE.sRGBEncoding;
+        		planeMaterial.map = map;
+        		planeMaterial.needsUpdate = true;
+        
+	} );
+        	textureLoader.load( 'textures/hardwood2_bump.jpg', function ( map ) {
 
-            const ball = new THREE.Mesh(ballGeometry, ballMaterial);
-            ball.position.set(0, 5, 0);
-            ball.castShadow = true;
-            scene.add(ball);
+        		map.wrapS = THREE.RepeatWrapping;
+        		map.wrapT = THREE.RepeatWrapping;
+        		map.anisotropy = 4;
+        		map.repeat.set( 10, 24 );
+        		planeMaterial.bumpMap = map;
+        		planeMaterial.needsUpdate = true;
+        
+	} );
+        	textureLoader.load( 'textures/hardwood2_roughness.jpg', function ( map ) {
 
-            const bulbGeometry = new THREE.SphereGeometry(0.02, 16, 8);
-            const bulbMaterial = new THREE.MeshStandardMaterial({
-                emissive: 0xffffee,
-                emissiveIntensity: 1,
-                color: 0xffffff
-            })
-            const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+        		map.wrapS = THREE.RepeatWrapping;
+        		map.wrapT = THREE.RepeatWrapping;
+        		map.anisotropy = 4;
+        		map.repeat.set( 10, 24 );
+        		planeMaterial.roughnessMap = map; //
+        		planeMaterial.needsUpdate = true;
+        
+	} );
+        	const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+        	plane.receiveShadow = true;
+        	plane.rotation.x = - Math.PI / 2.0;
+        	scene.add( plane );
 
-            bulbLight = new THREE.PointLight(0xffee88, 1, 100, 1.7);
-            bulbLight.position.set(0, 5, 0);
-            bulbLight.castShadow = true;
+        	const boxGeometry = new THREE.BoxGeometry( 0.5, 0.5, 0.5 );
+        	const boxMaterial = new THREE.MeshStandardMaterial( {
+        		roughness: 0.7,
+        		color: 0xffffff,
+        		bumpScale: 0.002,
+        		metalness: 0.2
+        	} );
+        	textureLoader.load( 'textures/brick_diffuse.jpg', function ( map ) {
 
-            bulbLight.add(bulb);
-            scene.add(bulbLight);
-        }
+        		map.wrapS = THREE.RepeatWrapping;
+        		map.wrapT = THREE.RepeatWrapping;
+        		map.anisotropy = 4;
+        		map.repeat.set( 1, 1 );
+        		map.encoding = THREE.sRGBEncoding,
+        		boxMaterial.map = map;
+        		boxMaterial.needsUpdate = true;
+        
+	} );
+        	textureLoader.load( 'textures/brick_bump.jpg', function ( map ) {
+
+        		map.wrapS = THREE.RepeatWrapping;
+        		map.wrapT = THREE.RepeatWrapping;
+        		map.anisotropy = 4;
+        		map.repeat.set( 1, 1 );
+        		// map.encoding = THREE.sRGBEncoding,
+        		boxMaterial.bumpMap = map;
+        		boxMaterial.needsUpdate = true;
+        
+	} );
+        	const box0 = new THREE.Mesh( boxGeometry, boxMaterial );
+        	box0.position.set( - 0.5, 0.25, - 1 );
+        	box0.castShadow = true;
+        	scene.add( box0 );
+        	const box1 = new THREE.Mesh( boxGeometry, boxMaterial );
+        	box1.position.set( - 0.5, 0.25, - 1 );
+        	box1.castShadow = true;
+        	scene.add( box1 );
+        	const box2 = new THREE.Mesh( boxGeometry, boxMaterial );
+        	box2.position.set( - 0.5, 0.25, - 1 );
+        	box2.castShadow = true;
+        	scene.add( box2 );
+
+        	const ballGeometry = new THREE.SphereGeometry( 0.25, 32, 32 );
+        	const ballMaterial = new THREE.MeshStandardMaterial( {
+        		color: 0xffffff,
+        		roughness: 0.5,
+        		metalness: 1.0
+        	} );
+        	textureLoader.load( 'textures/planets/earth_atmos_2048.jpg', function ( map ) {
+
+        		map.anisotropy = 4;
+        		map.encoding = THREE.sRGBEncoding;
+        		ballMaterial.map = map;
+        		ballMaterial.needsUpdate = true;
+        
+	} );
+        	textureLoader.load( 'textures/planets/earth_specular_2048.jpg', function ( map ) { // 这个球不需要凹凸/粗糙度贴图
+
+        		map.anisotropy = 4;
+        		map.encoding = THREE.sRGBEncoding;
+        		ballMaterial.metalnessMap = map;
+        		ballMaterial.needsUpdate = true;
+        
+	} );
+
+        	const ball = new THREE.Mesh( ballGeometry, ballMaterial );
+        	ball.position.set( 1, 0.5, 1 );
+        	ball.castShadow = true;
+        	scene.add( ball );
+
+        	const bulbGeometry = new THREE.SphereGeometry( 0.02, 16, 8 );
+        	const bulbMaterial = new THREE.MeshStandardMaterial( {
+        		emissive: 0xffffee,
+        		emissiveIntensity: 1,
+        		color: 0xffffff
+        	} );
+        	const bulb = new THREE.Mesh( bulbGeometry, bulbMaterial );
+
+        	bulbLight = new THREE.PointLight( 0xffee88, 1, 100, 1.7 );
+        	bulbLight.position.set( 0, 5, 0 );
+        	bulbLight.castShadow = true;
+
+        	bulbLight.add( bulb );
+        	scene.add( bulbLight );
+
+}
 
         function animate() {
-            requestAnimationFrame(animate);
-            render();
-        }
+
+        	requestAnimationFrame( animate );
+        	render();
+
+}
 
         function render() {
-            const t = clock.getElapsedTime();
-            bulbLight.position.y = Math.abs(Math.sin(t) + 1);
-            renderer.shadowMap.enabled = true;
-            renderer.render(scene, camera);
-        }
+
+        	const t = clock.getElapsedTime();
+        	bulbLight.position.y = Math.abs( Math.sin( t ) + 1 );
+        	renderer.shadowMap.enabled = true;
+        	renderer.render( scene, camera );
+
+}
     </script>
 </body>
 
