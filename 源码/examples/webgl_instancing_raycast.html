@@ -31,7 +31,7 @@
 			let camera, scene, renderer, controls, stats;
 
 			let mesh;
-			const amount = parseInt( window.location.search.slice( 1 ) ) || 10;
+			const amount = 10;
 			const count = Math.pow( amount, 3 );
 
 			const raycaster = new THREE.Raycaster();
@@ -65,12 +65,15 @@
 
 				const matrix = new THREE.Matrix4();
 
-				for ( let x = 0; x < amount; x ++ ) {
+				for ( let x = 0; x < amount; x ++ ) { // x由0递增, 最大10
 
-					for ( let y = 0; y < amount; y ++ ) {
+					for ( let y = 0; y < amount; y ++ ) { // 
 
 						for ( let z = 0; z < amount; z ++ ) {
-
+							console.log(`offset-x: `, offset - x);
+							console.log(`offset-y: `, offset - x);
+							console.log(`offset-z: `, offset - x);
+							console.log(`----------------------`);
 							matrix.setPosition( offset - x, offset - y, offset - z );
 
 							mesh.setMatrixAt( i, matrix );
