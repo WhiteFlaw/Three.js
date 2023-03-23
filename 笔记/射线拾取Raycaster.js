@@ -18,6 +18,10 @@ function init() {
     camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
     camera.position.set(10, 10, 10);
 
+    const light = new THREE.HemisphereLight(0xffffff, 0x888888);
+    light.position.set(0, 1, 0);
+    scene.add(light);
+
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
