@@ -6,7 +6,6 @@
 npm-debug.log
 .jshintrc
 .vs/
-build
 editor
 files
 manual

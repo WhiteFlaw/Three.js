@@ -21,7 +21,7 @@
 				}
 			}
 		</script>
-
+    <div></div>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -30,15 +30,16 @@
         let geometry, material, mesh;
 
         const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
+        const mouse = new THREE.Vector2(1, 1);
 
         const color = new THREE.Color();
-		const white = new THREE.Color().setHex(0xffffff);
+        const div = document.querySelector('div');
+        const white = new THREE.Color().setHex(0xffffff);
         init();
         animate();
 
         function init() {
-            
+
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
             camera.position.set(10, 10, 10);
             camera.lookAt(0, 0, 0);
@@ -51,9 +52,9 @@
 
             geometry = new THREE.IcosahedronGeometry(0.5, 3);
             material = new THREE.MeshPhongMaterial({ color: 0xffffff });
-            
+
             mesh = new THREE.InstancedMesh(geometry, material, 4);
-            
+
             const matrix0 = new THREE.Matrix4();
             matrix0.setPosition(0, 0, 0);
             const matrix1 = new THREE.Matrix4();
@@ -62,12 +63,12 @@
             matrix2.setPosition(0, 1, 0);
             const matrix3 = new THREE.Matrix4();
             matrix3.setPosition(0, 0, 1);
-            
+
             mesh.setMatrixAt(0, matrix0);
             mesh.setMatrixAt(1, matrix1);
             mesh.setMatrixAt(2, matrix2);
             mesh.setMatrixAt(3, matrix3);
-            
+
             scene.add(mesh);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -81,28 +82,49 @@
             controls.enableZoom = false;
 
             document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('resize', onWindowResize);
         }
 
-        function onMouseMove() {
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function onMouseMove(event) {
             event.preventDefault();
-			mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-			mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
-            raycaster.setFromCamera(mouse, camera); // (鼠标二维坐标, 摄像机)
-            const intersection = raycaster.intersectObject(mesh); // 被射线贯穿的实例, 射线可穿透物体所以可能有多个
-            if (intersection.length > 0) { // 但是鼠标移开之后射线不再穿过物体就不该再大于0, 为什么还会执行?
-                const instanceId = intersection[0].instanceId; // 但是第0个肯定是最靠近放射源的那个实例
-                mesh.getColorAt(instanceId, color);
-                if (color.equals(white)) { // 检查当前物体颜色是否为白色, 如果不是, 那么变色
-                    mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
-                    mesh.instanceColor.needsUpdate = true;
-                }
-            }
-            render();
+
+			controls.update();
+
+			raycaster.setFromCamera(mouse, camera); // 更新射线, 将鼠标在标准设备上的位置和相机镜头的位置作为顶点形成射线
+
+			const intersection = raycaster.intersectObject(mesh); // 获取到的数组是所有被穿过的对象
+            // 第一个被穿过的对象在第0位
+
+			if (intersection.length > 0) {
+
+				const instanceId = intersection[0].instanceId;
+
+				mesh.getColorAt(instanceId, color);
+
+				if (color.equals(white)) {
+
+					mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
+
+					mesh.instanceColor.needsUpdate = true;
+
+				}
+
+			}
+
+			render();
         }
 
         function render() {
