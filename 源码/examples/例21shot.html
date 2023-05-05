@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>three.js webgl - instancing - raycast</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+	<!-- Import maps polyfill -->
+	<!-- Remove this when import maps will be widely supported -->
+	<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
+	<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+	</script>
+
+	<div id="blocker">
+		<div id="instructions">
+			<p style="font-size:36px">
+				Click To Start
+			</p>
+			<p>
+				Move: WASD<br />
+				Jump: SPACE
+			</p>
+		</div>
+	</div>
+
+	<script type="module">
+		import * as THREE from 'three';
+		import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+		let scene, camera, renderer, controls;
+		let mesh, ambientLight, pointLight;
+
+		let moveForward = false;
+		let moveBackward = false;
+		let moveLeft = false;
+		let moveRight = false;
+		let canJump = false;
+		let eventList = [];
+		let isDouble = false;
+
+		let prevTime = performance.now();
+		const velocity = new THREE.Vector3();
+		const direction = new THREE.Vector3();
+		const vertex = new THREE.Vector3();
+		const color = new THREE.Color();
+
+		const amount = 10;
+		const count = 100;
+		const raycaster = new THREE.Raycaster();
+		const mouse = new THREE.Vector2(1, 1);
+		const white = new THREE.Color().setHex(0xffffff);
+
+		init();
+		model();
+		control();
+		animate();
+
+		function init() {
+			camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+			camera.position.set(25, 0, 0);
+			camera.rotation.y = Math.PI / 180 * 90;
+
+			scene = new THREE.Scene();
+
+			ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+			ambientLight.position.set(0, 10, 0);
+			scene.add(ambientLight);
+
+			pointLight = new THREE.PointLight(0xffffff, 0.5);
+			pointLight.position.set(10, 10, 10);
+			scene.add(pointLight);
+
+			const axes = new THREE.AxesHelper();
+			scene.add(axes);
+
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.outputEncoding = THREE.sRGBEncoding;
+			document.body.appendChild(renderer.domElement);
+
+			window.addEventListener("mousedown", e => { onMouseDown(e) });
+			window.addEventListener("mouseup", e => { onMouseUp(e) });
+			window.addEventListener("mousemove", e => { onMouseMove(e) });
+			window.addEventListener('resize', onWindowResize);
+		}
+
+		function model() {
+			const geometry = new THREE.IcosahedronGeometry(0.5, 3);
+			const material = new THREE.MeshStandardMaterial({
+				color: 0xffffff,
+				side: THREE.DoubleSide
+			})
+			mesh = new THREE.InstancedMesh(geometry, material, count);
+			let i = 0;
+			const offset = (amount - 1) / 2;
+			const matrix = new THREE.Matrix4();
+
+			for (let x = 0; x < amount; x++) {
+				for (let y = 0; y < amount; y++) {
+					for (let z = 0; z < amount; z++) {
+						matrix.setPosition(offset, offset - y, offset - z);
+						mesh.setMatrixAt(i, matrix);
+						mesh.setColorAt(i, color);
+						i++;
+					}
+				}
+			}
+			mesh.position.set(0, 6, 0)
+			mesh.castShadow = true;
+			scene.add(mesh);
+
+			const planeGeometry = new THREE.PlaneGeometry(100, 100);
+			const plane = new THREE.Mesh(planeGeometry, material);
+			plane.rotation.x = Math.PI / 180 * 90;
+			plane.receiveShadow = true;
+			scene.add(plane);
+
+			const bulbGeometry = new THREE.SphereGeometry(0.1, 16, 8);
+			const bulbMaterial = new THREE.MeshStandardMaterial({
+				emissive: 0xffffee,
+				emissiveIntensity: 1,
+				color: 0xffffff
+			});
+			const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+			pointLight.add(bulb);
+		}
+
+		function control() {
+			controls = new PointerLockControls(camera, renderer.domElement);
+			const blocker = document.getElementById('blocker');
+			const instructions = document.getElementById('instructions');
+
+			instructions.addEventListener('click', function () {
+				controls.lock();
+			});
+
+			controls.addEventListener('lock', function () {
+				instructions.style.display = 'none';
+				blocker.style.display = 'none';
+			});
+
+			controls.addEventListener('unlock', function () {
+				blocker.style.display = 'block';
+				instructions.style.display = '';
+			});
+
+			scene.add(controls.getObject());
+
+			document.addEventListener('keydown', (e) => { onKeyDown(e) });
+			document.addEventListener('keyup', (e) => { onKeyUp(e) });
+		}
+
+		function onKeyDown(event) {
+			switch (event.code) {
+				case 'ArrowUp':
+				case 'KeyW':
+					moveForward = true;
+					break;
+
+				case 'ArrowLeft':
+				case 'KeyA':
+					moveLeft = true;
+					break;
+
+				case 'ArrowDown':
+				case 'KeyS':
+					moveBackward = true;
+					break;
+
+				case 'ArrowRight':
+				case 'KeyD':
+					moveRight = true;
+					break;
+
+				case 'Space':
+					if (canJump === true) velocity.y += 50;
+					canJump = false;
+					break;
+			}
+		};
+
+		function onKeyUp(event) {
+			switch (event.code) {
+				case 'ArrowUp':
+				case 'KeyW':
+					moveForward = false;
+					break;
+
+				case 'ArrowLeft':
+				case 'KeyA':
+					moveLeft = false;
+					break;
+
+				case 'ArrowDown':
+				case 'KeyS':
+					moveBackward = false;
+					break;
+
+				case 'ArrowRight':
+				case 'KeyD':
+					moveRight = false;
+					break;
+			}
+		};
+
+		function onMouseDown(e) {
+			if (e.button === 1) return; // 中键
+			eventList.push(e.button); // e.button 0左键 1中键 2右键
+			judge();
+		}
+
+		function onMouseUp(e) {
+			if (e.button === 1) return;
+			if (eventList.length === 2) isDouble = false;
+
+			remove(e.button);
+		}
+
+		function onMouseMove(e) {
+			e.preventDefault();
+			mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+			mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
+
+			if (!isDouble) return;
+			if (eventList[0] === 2) {
+				console.log('shooting&moving');
+				judge();
+			}
+		}
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+
+			const time = performance.now();
+
+			if (controls.isLocked === true) {
+
+				const delta = (time - prevTime) / 1000;
+
+				velocity.x -= velocity.x * 10.0 * delta;
+				velocity.z -= velocity.z * 10.0 * delta;
+
+				velocity.y -= 9.8 * 15.0 * delta;
+
+				direction.z = Number(moveForward) - Number(moveBackward);
+				direction.x = Number(moveRight) - Number(moveLeft);
+				direction.normalize();
+
+				if (moveLeft || moveRight) velocity.x -= direction.x * 100.0 * delta;
+				if (moveForward || moveBackward) velocity.z -= direction.z * 100.0 * delta;
+
+				controls.moveRight(- velocity.x * delta);
+				controls.moveForward(- velocity.z * delta);
+
+				controls.getObject().position.y += (velocity.y * delta);
+
+				if (controls.getObject().position.y < 1) {
+					velocity.y = 0;
+					controls.getObject().position.y = 1;
+
+					canJump = true;
+				}
+			}
+			prevTime = time;
+			renderer.render(scene, camera);
+		}
+
+		function remove(val) {
+			if (eventList.length === 1 && eventList[0] === 2) {
+				aimEnd()
+			}
+			if (eventList[0] == val) {
+				eventList.shift();
+				return;
+			}
+			if (eventList[1] == val) {
+				eventList.pop();
+				return;
+			}
+		}
+
+		function judge() {
+			if (eventList.length === 2) {
+				shot();
+				isDouble = true;
+			} else if (eventList[0] === 2) {
+				aimStart()
+			}
+		}
+
+		const foresight = null;
+
+		function aimEnd() {
+			camera.fov = 80;
+			camera.updateProjectionMatrix();
+			console.log('aim-end');
+		}
+
+		function aimStart() {
+			camera.fov = 45;
+			camera.updateProjectionMatrix();
+			console.log('aiming')
+
+			const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+
+			const points = [];
+			points.push(new THREE.Vector3(0, 0, 0));
+			points.push(new THREE.Vector3(0, 10, 0));
+
+			const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+			const line = new THREE.Line(geometry, material);
+			scene.add(line);
+		}
+
+		function shot() {
+			if (eventList[0] === 2) {
+				raycaster.setFromCamera(mouse, camera); // 更新射线, 将鼠标在标准设备上的位置和相机镜头的位置作为顶点形成射线
+				const intersection = raycaster.intersectObject(mesh);
+				if (intersection.length > 0) {
+					console.log()
+					const instanceId = intersection[0].instanceId;
+					mesh.getColorAt(instanceId, color);
+					if (color.equals(white)) {
+						mesh.setColorAt(instanceId, new THREE.Color(0xfd2e2e));
+						mesh.instanceColor.needsUpdate = true;
+					}
+				}
+				console.log('shooting');
+			}
+		}
+
+		function refresh() {
+
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+	</script>
+</body>
+
+<style>
+	#blocker {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.5);
+	}
+
+	#instructions {
+		width: 100%;
+		height: 100%;
+
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+
+		text-align: center;
+		font-size: 14px;
+		cursor: pointer;
+	}
+</style>
+
+</html>
