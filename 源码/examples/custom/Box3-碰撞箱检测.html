@@ -32,6 +32,12 @@
         animate();
 
         function init() {
+            document.body.innerHTML = `
+            <span>
+                横向: WASD
+                纵向: QE  
+            </span>
+            `
             scene = new THREE.Scene();
             scene.background = new THREE.Color('#343434');
 
