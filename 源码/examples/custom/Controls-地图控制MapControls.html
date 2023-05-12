@@ -23,7 +23,7 @@
     <script type="module">
         import * as THREE from 'three';
         import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-        import { MapControls } from 'three/addons/controls/OrbitControls.js';
+        import { MapControls } from 'three/addons/controls/MapControls.js';
 
         let camera, controls, scene, renderer;
 
@@ -52,8 +52,8 @@
             controls.enableDamping = true; // 控制器惯性启用
             controls.dampingFactor = 0.05; // 控制器惯性数值
             controls.screenSpacePanning = false // 定义平移如何进行, 即摄像机自转或者平移
-            controls.minDistance = 100; // 相机向内最大移动举例, 仅适用于正交相机
-            controls.maxDistance = 500; // 相机向内最大移动距离, 仅适用于正交相机
+            controls.minDistance = 100; // 相机向内最大移动举例
+            controls.maxDistance = 500; // 相机向内最大移动距离
             controls.maxPolarAngle = Math.PI / 2; // 摄像机旋转角度上限
 
             // 物体
