@@ -6,10 +6,11 @@
 
 可以使用以下代码设置纹理的编码方式：
 
-javascript
-Copy code
+```javascript
 const texture = new THREE.TextureLoader().load('texture.jpg');
 texture.encoding = THREE.LinearEncoding;
+```
+
 在这里, 将纹理的 encoding 属性设置为 THREE.LinearEncoding, 即表示使用 Linear 编码方式。
 
 需要注意的是, 不同的编码方式在处理颜色时会产生不同的结果, 因此在使用时需要根据实际情况进行选择和权衡。

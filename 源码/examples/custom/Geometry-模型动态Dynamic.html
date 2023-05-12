@@ -85,8 +85,13 @@
         }
 
         function render() {
-            const delta = clock.getDelta();
+            // clock有一个oldTime属性, 内部存储最后一次调用start(), getElapsedTime()或者getDelta()的时间
+            
+            const delta = clock.getDelta(); 
+            // 获取自oldTime设置后到当前的秒数(即上次调用start(), getElapsedTime()或者getDelta()的时刻与当前时刻的时间差)
+
             const time = clock.getElapsedTime() * 10;
+            // 获取自时钟启动后的秒数, 顺带将clock.oldTime设置为当前时间
 
             const position = geometry.attributes.position;
 

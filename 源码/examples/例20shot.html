@@ -310,7 +310,8 @@
 		}
 
 		function aimStart() {
-			camera.fov = 45;
+			const timer = new THREE.Clock();
+
 			camera.updateProjectionMatrix();
 			console.log('aiming')
 
@@ -331,7 +332,6 @@
 				raycaster.setFromCamera(mouse, camera); // 更新射线, 将鼠标在标准设备上的位置和相机镜头的位置作为顶点形成射线
 				const intersection = raycaster.intersectObject(mesh);
 				if (intersection.length > 0) {
-					console.log()
 					const instanceId = intersection[0].instanceId;
 					mesh.getColorAt(instanceId, color);
 					if (color.equals(white)) {
@@ -343,7 +343,7 @@
 			}
 		}
 
-		function refresh() {
+		function refresh() { // 一个可触发的模型, 点击后刷新标靶
 
 		}
 
