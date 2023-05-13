@@ -75,6 +75,12 @@
             spotLight.shadow.camera.near = 40;
             spotLight.add(bulb);
             scene.add(spotLight);
+
+            scene.overrideMaterial = new THREE.MeshPhongMaterial({ // 强制材质覆盖
+                color: 0xffffff,
+                specular: 0xffffff,
+                shininess: 50
+            })
         })()
 
         function render() {

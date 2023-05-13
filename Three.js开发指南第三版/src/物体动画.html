@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>灯光&阴影</title>
+    <title>物体动画</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
@@ -23,7 +23,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        let scene, camera, renderer, controls, plane;
+        let scene, camera, renderer, controls, plane, cube;
 
         (function init() {
             scene = new THREE.Scene();
@@ -34,9 +34,7 @@
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.setPixelRatio);
-            renderer.setClearColor (new THREE.Color(0x000000));
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.Enabled = true; // 启用阴影
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
@@ -45,37 +43,37 @@
             scene.add(axes);
 
             const planeGeometry = new THREE.PlaneGeometry(60, 60);
-            const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xAAAAAA });
+            const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xAAAAAA });
             plane = new THREE.Mesh(planeGeometry, planeMaterial);
             plane.rotation.x = -0.5 * Math.PI;
-            plane.receiveShadow = true; // 可接受阴影
             scene.add(plane);
 
             const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
-            const cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-            const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000, wireframe: true });
+            cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
             cube.position.set(-4, 3, 0);
-            cube.castShadow = true; // 可产生阴影
             scene.add(cube);
 
             const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
-            const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0x7777ff });
+            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x7777FF, wireframe: true });
             const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
             sphere.position.set(20, 4, 2);
-            cube.castShadow = true; // 可产生阴影
             scene.add(sphere);
-
-            const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, framewire: true }));
-
-            const spotLight = new THREE.SpotLight(0xffffff);
-            spotLight.position.set(-20, 20, -15);
-            spotLight.castShadow = true;
-            spotLight.mapSize = new THREE.Vector2(1024, 1024);
-            spotLight.shadow.camera.far = 140;
-            spotLight.shadow.camera.near = 40;
-            spotLight.add(bulb);
-            scene.add(spotLight);
         })()
+
+        let num = -0.05
+
+        function cubeAnim() {
+            if (cube.position.x < 0) {
+                num = 0.05;
+            }
+            if (cube.position.x > 5) {
+                num = -0.05;
+            }
+            cube.position.x += num;
+            cube.position.y += num;
+            cube.position.z += num;
+        }
 
         function render() {
             renderer.render(scene, camera);
@@ -83,6 +81,7 @@
 
         (function animate() {
             requestAnimationFrame(animate);
+            cubeAnim();
             render();
         })()
     </script>
