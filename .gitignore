@@ -1,7 +1,5 @@
 .DS_Store
 node_modules
-/教程
-
 
 # local env files
 .env.local
@@ -21,4 +19,3 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-源码/examples/models/gltf/ruin.glb
