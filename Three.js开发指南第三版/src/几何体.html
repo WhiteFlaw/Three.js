@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>几何体</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+                    "three/addons/": "../jsm/"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls, plane, mesh;
+
+        (function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(-30, 40, 30);
+            camera.lookAt(scene.position);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.setPixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+
+            const axes = new THREE.AxesHelper(20);
+            scene.add(axes);
+
+            const vertices = new Float32Array([ // 顶点
+                -5.0, -5.0, 5.0,
+                5.0, -5.0, 5.0,
+                5.0, 5.0, 5.0,
+
+                5.0, 5.0, 5.0,
+                -5.0, 5.0, 5.0,
+                -5.0, -5.0, 5.0
+            ])
+            // 如果点的顺序从头到尾顺序是顺时针, 那么该面会面向摄像机, 如果逆时针那么会背对摄像机
+
+            /* const faces = [ // Face3在r126版本移除
+                new THREE.Face3(0, 2, 1),
+                new THREE.Face3(2, 3, 1),
+                new THREE.Face3(4, 6, 5),
+                new THREE.Face3(6, 7, 5),
+                new THREE.Face3(4, 5, 1),
+                new THREE.Face3(5, 0, 1),
+                new THREE.Face3(7, 6, 2),
+                new THREE.Face3(6, 3, 2),
+                new THREE.Face3(5, 7, 0),
+                new THREE.Face3(7, 2, 0),
+                new THREE.Face3(1, 3, 4),
+                new THREE.Face3(3, 6, 4)
+            ] */
+
+            // const geometry = new THREE.Geometry(); // Geometry在r126版本移除
+            // geometry.vertices = vertices;
+            // geometry.computeFaceNormal() // 重新计算面法向量, 废弃, 用computeVertexNormals()替代
+
+            // 使用BufferGeometry取代上述二者;
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            const material = new THREE.MeshBasicMaterial({ color: 0xffdddd });
+            mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+        })()
+
+        function render() {
+            renderer.render(scene, camera);
+
+            const num = Math.random().toFixed(2) * 10;
+            mesh.geometry.attributes.position.array[0] += 0.1;
+            mesh.geometry.attributes.position.needsUpdate = true; // vertices更新必须加, 在每次渲染时BufferGeometry都会判定自身是否需要更新
+
+            mesh.material.color = new THREE.Color(0xDC + num + num + num + num);
+            mesh.geometry.computeVertexNormals(); // 计算面法向量, 当前情况可以不调用, 不影响外形更新
+        }
+
+        (function animate() {
+            requestAnimationFrame(animate);
+            render();
+        })()
+    </script>
+
+</body>
+
+</html>
