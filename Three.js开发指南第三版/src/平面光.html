@@ -22,6 +22,8 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RectAreaLightHelper } from 'three/addons/helpers/RectAreaLightHelper.js';
+        import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 
         let scene, camera, renderer, controls, plane, sphere;
 
@@ -44,53 +46,52 @@
             const axes = new THREE.AxesHelper(20);
             scene.add(axes);
 
-            const lambertMaterial = new THREE.MeshLambertMaterial({ color: 0xAAAAAA });
+            const lambertMaterial = new THREE.MeshStandardMaterial({ color: 0xAAAAAA });
 
-            new THREE.TextureLoader().load("../assets/textures/grasslight-big.jpg", function (textureGrass) {
-                // 草皮贴图
-                textureGrass.wrapS = THREE.RepeatWrapping;
-                textureGrass.wrapT = THREE.RepeatWrapping;
-
-                const planeGeometry = new THREE.PlaneGeometry(60, 60);
-                const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xAAAAAA, map: textureGrass });
-                plane = new THREE.Mesh(planeGeometry, planeMaterial);
-                plane.rotation.x = -0.5 * Math.PI;
-                plane.receiveShadow = true; // 可接受阴影
-                scene.add(plane);
-            });
+            const planeGeometry = new THREE.PlaneGeometry(60, 60);
+            plane = new THREE.Mesh(planeGeometry, lambertMaterial);
+            plane.rotation.x = -0.5 * Math.PI;
+            scene.add(plane);
 
             const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
             const cube = new THREE.Mesh(cubeGeometry, lambertMaterial);
-            cube.position.set(-4, 3, 0);
-            cube.castShadow = true; // 可产生阴影
+            cube.position.set(2, 3, -3);
             scene.add(cube);
 
             const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
             sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
-            sphere.position.set(10, 4, 2);
-            sphere.castShadow = true; // 可产生阴影
+            sphere.position.set(-10, 4, -10);
             scene.add(sphere);
 
-            const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            // 不支持阴影。
+            // 只支持 MeshStandardMaterial 和 MeshPhysicalMaterial 两种材质。
+            // 你必须在你的场景中加入 RectAreaLightUniformsLib ，并调用init()。
 
-            const hemiLight = new THREE.HemisphereLight(0x0000ff, 0x00ff00, 0.1); // 半球光主要用于模拟自然的户外光照状态
-            hemiLight.position.set(0, 30, 0);
-            hemiLight.castShadow = true;
-            hemiLight.intensity = 3; // 强度
-            hemiLight.target = cube;
-            hemiLight.add(bulb);
-            scene.add(hemiLight);
+            RectAreaLightUniformsLib.init();
+
+
+            const rectLight0 = new THREE.RectAreaLight(0x00ff00, 7, 4, 10);
+            rectLight0.position.set(0, 5, 5);
+            scene.add(rectLight0);
+
+            const rectLight1 = new THREE.RectAreaLight(0x0000ff, 7, 4, 10);
+            rectLight1.position.set(8, 5, 5);
+            scene.add(rectLight1);
+
+            scene.add(new RectAreaLightHelper(rectLight0));
+            scene.add(new RectAreaLightHelper(rectLight1));
+
         })()
 
         let num = -0.05
         function sphereAnim() {
-            if (sphere.position.z < -10) {
+            if (sphere.position.x < -10) {
                 num = 0.1;
             }
-            if (sphere.position.z > 10) {
+            if (sphere.position.x > 10) {
                 num = -0.1;
             }
-            sphere.position.z += num;
+            sphere.position.x += num;
         }
 
         function render() {
