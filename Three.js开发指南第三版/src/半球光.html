@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>灯光&阴影</title>
+    <title>半球光</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
@@ -23,7 +23,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        let scene, camera, renderer, controls, plane, spotLightHelper;
+        let scene, camera, renderer, controls, plane, sphere;
 
         (function init() {
             scene = new THREE.Scene();
@@ -37,7 +37,6 @@
             renderer.setClearColor(new THREE.Color(0x000000));
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true; // 启用阴影
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
@@ -47,11 +46,18 @@
 
             const lambertMaterial = new THREE.MeshLambertMaterial({ color: 0xAAAAAA });
 
-            const planeGeometry = new THREE.PlaneGeometry(60, 60);
-            plane = new THREE.Mesh(planeGeometry, lambertMaterial);
-            plane.rotation.x = -0.5 * Math.PI;
-            plane.receiveShadow = true; // 可接受阴影
-            scene.add(plane);
+            new THREE.TextureLoader().load("../assets/textures/grasslight-big.jpg", function (textureGrass) {
+                // 草皮贴图
+                textureGrass.wrapS = THREE.RepeatWrapping;
+                textureGrass.wrapT = THREE.RepeatWrapping;
+
+                const planeGeometry = new THREE.PlaneGeometry(60, 60);
+                const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xAAAAAA, map: textureGrass });
+                plane = new THREE.Mesh(planeGeometry, planeMaterial);
+                plane.rotation.x = -0.5 * Math.PI;
+                plane.receiveShadow = true; // 可接受阴影
+                scene.add(plane);
+            });
 
             const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
             const cube = new THREE.Mesh(cubeGeometry, lambertMaterial);
@@ -60,37 +66,40 @@
             scene.add(cube);
 
             const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
-            const sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
-            sphere.position.set(15, 4, 2);
+            sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
+            sphere.position.set(10, 4, 2);
             sphere.castShadow = true; // 可产生阴影
             scene.add(sphere);
 
             const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
 
-            const spotLight = new THREE.SpotLight(0xffffff);
-            spotLight.position.set(-20, 20, -15);
-            spotLight.castShadow = true;
-            spotLight.shadow.bias = -0.5; // 阴影偏移, 虽然有时候效果看起来像阴影截断
-            spotLight.mapSize = new THREE.Vector2(1024, 1024);
-            spotLight.shadow.camera.far = 35; // 35可以观察到远裁平面对阴影的效果
-            spotLight.shadow.camera.near = 27; // 27 可以比较直观观察到近裁平面对阴影的影响
-            spotLight.add(bulb);
-            scene.add(spotLight);
-
-            const spotCameraHelper = new THREE.CameraHelper(spotLight.shadow.camera);
-            scene.add(spotCameraHelper);
-
-            spotLightHelper = new THREE.SpotLightHelper(spotLight);
-            scene.add(spotLightHelper);
+            const hemiLight = new THREE.HemisphereLight(0x0000ff, 0x00ff00, 0.1); // 半球光主要用于模拟自然的户外光照状态
+            hemiLight.position.set(0, 100, 0);
+            hemiLight.castShadow = true;
+            hemiLight.intensity = 3; // 强度
+            hemiLight.target = cube;
+            hemiLight.add(bulb);
+            scene.add(hemiLight);
         })()
+
+        let num = -0.05
+        function sphereAnim() {
+            if (sphere.position.z < -10) {
+                num = 0.1;
+            }
+            if (sphere.position.z > 10) {
+                num = -0.1;
+            }
+            sphere.position.z += num;
+        }
 
         function render() {
             renderer.render(scene, camera);
-            spotLightHelper.update()
         }
 
         (function animate() {
             requestAnimationFrame(animate);
+            sphereAnim();
             render();
         })()
     </script>
