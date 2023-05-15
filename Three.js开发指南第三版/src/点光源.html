@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>灯光&阴影</title>
+    <title>点光源</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
@@ -23,7 +23,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        let scene, camera, renderer, controls, plane, spotLightHelper;
+        let scene, camera, renderer, controls, plane, sphere, pointLightHelper;
 
         (function init() {
             scene = new THREE.Scene();
@@ -35,9 +35,9 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setPixelRatio(window.setPixelRatio);
             renderer.setClearColor(new THREE.Color(0x000000));
+            renderer.useLegacyLights = false;
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true; // 启用阴影
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.body.appendChild(renderer.domElement);
 
             controls = new OrbitControls(camera, renderer.domElement);
@@ -60,37 +60,52 @@
             scene.add(cube);
 
             const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
-            const sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
+            sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
             sphere.position.set(15, 4, 2);
             sphere.castShadow = true; // 可产生阴影
             scene.add(sphere);
 
             const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
 
-            const spotLight = new THREE.SpotLight(0xffffff);
-            spotLight.position.set(-20, 20, -15);
-            spotLight.castShadow = true;
-            spotLight.shadow.bias = -0.5; // 阴影偏移, 虽然有时候效果看起来像阴影截断
-            spotLight.mapSize = new THREE.Vector2(1024, 1024);
-            spotLight.shadow.camera.far = 35; // 35可以观察到远裁平面对阴影的效果
-            spotLight.shadow.camera.near = 27; // 27 可以比较直观观察到近裁平面对阴影的影响
-            spotLight.add(bulb);
-            scene.add(spotLight);
+            const pointLight = new THREE.PointLight(0xffffff); // 单点发光, 照射所有方向
+            pointLight.position.set(-20, 1, 0);
+            pointLight.distance = 100; // 辐射极限距离
+            pointLight.castShadow = true;
+            pointLight.decay = 0.1; // 衰减速度
+            pointLight.intensity = 3; // 强度
+            pointLight.mapSize = new THREE.Vector2(1024, 1024);
+            pointLight.shadow.camera.far = 35; // 35可以观察到远裁平面对阴影的效果
+            pointLight.shadow.camera.near = 27; // 27 可以比较直观观察到近裁平面对阴影的影响
+            pointLight.shadow.camera.fov = 2;
+            pointLight.add(bulb);
+            scene.add(pointLight);
 
-            const spotCameraHelper = new THREE.CameraHelper(spotLight.shadow.camera);
-            scene.add(spotCameraHelper);
+            const pointCameraHelper = new THREE.CameraHelper(pointLight.shadow.camera);
+            scene.add(pointCameraHelper);
 
-            spotLightHelper = new THREE.SpotLightHelper(spotLight);
-            scene.add(spotLightHelper);
+            pointLightHelper = new THREE.PointLightHelper(pointLight);
+            scene.add(pointLightHelper);
         })()
+
+        let num = -0.05
+        function sphereAnim() {
+            if (sphere.position.z < -10) {
+                num = 0.1;
+            }
+            if (sphere.position.z > 10) {
+                num = -0.1;
+            }
+            sphere.position.z += num;
+        }
 
         function render() {
             renderer.render(scene, camera);
-            spotLightHelper.update()
+            pointLightHelper.update();
         }
 
         (function animate() {
             requestAnimationFrame(animate);
+            sphereAnim();
             render();
         })()
     </script>
