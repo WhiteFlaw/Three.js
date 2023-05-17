@@ -61,7 +61,7 @@
 
             const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
             const sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
-            sphere.position.set(15, 4, 2);
+            sphere.position.set(10, 4, 2);
             sphere.castShadow = true; // 可产生阴影
             scene.add(sphere);
 
@@ -70,9 +70,9 @@
             const spotLight = new THREE.SpotLight(0xffffff);
             spotLight.position.set(-20, 20, -15);
             spotLight.castShadow = true;
-            spotLight.shadow.bias = -0.5; // 阴影偏移, 虽然有时候效果看起来像阴影截断
+            spotLight.shadow.bias = -0.2; // 阴影偏移, 虽然有时候效果看起来像阴影截断
             spotLight.mapSize = new THREE.Vector2(1024, 1024);
-            spotLight.shadow.camera.far = 35; // 35可以观察到远裁平面对阴影的效果
+            spotLight.shadow.camera.far = 50; // 35可以观察到远裁平面对阴影的效果
             spotLight.shadow.camera.near = 27; // 27 可以比较直观观察到近裁平面对阴影的影响
             spotLight.add(bulb);
             scene.add(spotLight);
