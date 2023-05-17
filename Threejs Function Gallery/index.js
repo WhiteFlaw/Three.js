@@ -11,3 +11,34 @@ function pixelTexture(texture) {
   texture.wrapT = THREE.RepeatWrapping;
   return texture;
 }
+
+/* 
+ * @description 将Shader转换为贴图
+ * @param vertexShader, fragmentShader
+ * @returns Material
+ */
+function createMaterial(vertexShader, fragmentShader) {
+  const vertShader = document.getElementById(vertexShader).innerHTML;
+  const fragShader = document.getElementById(fragmentShader).innerHTML;
+
+  const attributes = {};
+  const uniforms = {
+      time: { type: 'f', value: 0.2 },
+      scale: { type: 'f', value: 0.2 },
+      alpha: { type: 'f', value: 0.6 },
+      resolution: { type: "v2", value: new THREE.Vector2() }
+  };
+
+  uniforms.resolution.value.x = window.innerWidth;
+  uniforms.resolution.value.y = window.innerHeight;
+
+  const meshMaterial = new THREE.ShaderMaterial({
+      uniforms: uniforms,
+      attributes: attributes,
+      vertexShader: vertShader,
+      fragmentShader: fragShader,
+      transparent: true
+  });
+
+  return meshMaterial;
+}

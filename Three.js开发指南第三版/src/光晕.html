@@ -64,11 +64,6 @@
 
             const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
 
-            /* const ambientLight = new THREE.AmbientLight(0xfff0b9, 0.5); // (颜色, 强度), 强度默认1, 环境光无法产生阴影
-            ambientLight.position.set(-20, 20, -15);
-            ambientLight.add(bulb);
-            scene.add(ambientLight); */
-
             const spotLight = new THREE.SpotLight(0xffffff);
             spotLight.position.set(1, 1, 2)
             spotLight.angle = 0.2 * Math.PI;

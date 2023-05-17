@@ -53,12 +53,6 @@
             cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
             cube.position.set(-4, 3, 0);
             scene.add(cube);
-
-            const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
-            const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x7777FF, wireframe: true });
-            const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-            sphere.position.set(20, 4, 2);
-            scene.add(sphere);
         })()
 
         let num = -0.05
