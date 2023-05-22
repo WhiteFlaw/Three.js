@@ -42,3 +42,34 @@ function createMaterial(vertexShader, fragmentShader) {
 
   return meshMaterial;
 }
+
+/* 
+ * @description 返回一个随机矩阵
+ * @param 随便一个Matrix4
+ * @returns Matrix4
+ */
+function randomizeMatrix(matrix) {
+
+  const position = new THREE.Vector3();
+  const rotation = new THREE.Euler();
+  const quaternion = new THREE.Quaternion();
+  const scale = new THREE.Vector3();
+
+
+  position.x = Math.random() * 40 - 20;
+  position.y = Math.random() * 40 - 20;
+  position.z = Math.random() * 40 - 20;
+
+  rotation.x = Math.random() * 2 * Math.PI;
+  rotation.y = Math.random() * 2 * Math.PI;
+  rotation.z = Math.random() * 2 * Math.PI;
+
+  quaternion.setFromEuler(rotation);
+
+  scale.x = scale.y = scale.z = Math.random() * 1;
+
+  matrix.compose(position, quaternion, scale);
+
+  return matrix;
+
+};

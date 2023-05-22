@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>网格合并</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+                    "three/addons/": "../jsm/"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+        let scene, camera, renderer, controls, plane;
+
+        (function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(-30, 40, 30);
+            camera.lookAt(scene.position);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.setPixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+
+            const axes = new THREE.AxesHelper(20);
+            scene.add(axes);
+
+            const planeGeometry = new THREE.PlaneGeometry(60, 60);
+            const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xAAAAAA });
+            plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = -0.5 * Math.PI;
+            scene.add(plane);
+
+            const geometries = [];
+            const cubeSize = 1.0;
+
+            const matrix = new THREE.Matrix4();
+            const geometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+
+            for (let i = 0; i < 200; i++) {
+
+                randomizeMatrix(matrix);
+
+                const instanceGeometry = geometry.clone();
+                instanceGeometry.applyMatrix4(matrix);
+
+                geometries.push(instanceGeometry);
+
+            }
+            const mergedGeometry = BufferGeometryUtils.mergeGeometries(geometries);
+            const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+            const cubes = new THREE.Mesh(mergedGeometry, cubeMaterial);
+            cubes.castShadow = true;
+            scene.add(cubes)
+        })()
+
+        function randomizeMatrix(matrix) {
+
+            const position = new THREE.Vector3();
+            const rotation = new THREE.Euler();
+            const quaternion = new THREE.Quaternion();
+            const scale = new THREE.Vector3();
+
+
+            position.x = Math.random() * 40 - 20;
+            position.y = Math.random() * 40 - 20;
+            position.z = Math.random() * 40 - 20;
+
+            rotation.x = Math.random() * 2 * Math.PI;
+            rotation.y = Math.random() * 2 * Math.PI;
+            rotation.z = Math.random() * 2 * Math.PI;
+
+            quaternion.setFromEuler(rotation);
+
+            scale.x = scale.y = scale.z = Math.random() * 1;
+
+            matrix.compose(position, quaternion, scale);
+
+            return matrix;
+
+        };
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+        (function animate() {
+            requestAnimationFrame(animate);
+            render();
+        })()
+    </script>
+
+</body>
+
+</html>
