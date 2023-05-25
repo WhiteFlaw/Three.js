@@ -100,6 +100,9 @@
                         if (!running) {
                             runAction.play();
                             idleAction.crossFadeTo(runAction, 0.3, false);
+                        } else {
+                            idleAction.play();
+                            runAction.crossFadeTo(idleAction, 0.3, false);
                         }
                     }
                     document.querySelector('#run').onclick = () => {
