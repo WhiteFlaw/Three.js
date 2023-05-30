@@ -37,8 +37,9 @@
 	<script type="module">
 		import * as THREE from 'three';
 		import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+		import Stats from 'three/addons/libs/stats.module.js';
 
-		let scene, camera, renderer, controls;
+		let scene, camera, renderer, controls, stats;
 		let mesh, ambientLight, pointLight, diffuseMap;
 
 		let moveForward = false;
@@ -89,6 +90,9 @@
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			renderer.outputEncoding = THREE.sRGBEncoding;
 			document.body.appendChild(renderer.domElement);
+
+			stats = new Stats();
+			document.body.appendChild(stats.dom);
 
 			window.addEventListener("mousedown", e => { onMouseDown(e) });
 			window.addEventListener("mouseup", e => { onMouseUp(e) });
@@ -271,6 +275,8 @@
 			}
 			prevTime = time;
 			renderer.render(scene, camera);
+
+			stats.update();
 		}
 
 		function remove(val) {
@@ -319,6 +325,7 @@
 
 			const line = new THREE.Line(geometry, material);
 			scene.add(line);
+
 		}
 
 		function shot() {
