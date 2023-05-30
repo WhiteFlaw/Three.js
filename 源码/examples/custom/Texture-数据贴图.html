@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>弹痕特效</title>
+    <title>数据贴图</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="../main.css">
@@ -103,11 +103,11 @@
             const size = dataTexture.image.width * dataTexture.image.height;
             const data = dataTexture.image.data;
 
-            const r = Math.floor(0); // 黑色
-            const g = Math.floor(0);
-            const b = Math.floor(0);
+            const r = Math.floor(color.r * 255); // 随机颜色
+            const g = Math.floor(color.g * 255);
+            const b = Math.floor(color.b * 255);
 
-            for (let i = 0; i < size; i++) { // 界定尺寸(尺寸是固定的)
+            for (let i = 0; i < size; i++) { // 界定尺寸
                 const stride = i * 4;
 
                 data[stride] = r;
@@ -116,8 +116,8 @@
                 data[stride + 3] = 1;
             }
 
-            position.x = 3;
-            position.y = 3;
+            position.x = (32 * THREE.MathUtils.randInt(1, 16)) - 32;
+            position.y = (32 * THREE.MathUtils.randInt(1, 16)) - 32;
 
             renderer.copyTextureToTexture(position, dataTexture, diffuseMap);
         }
