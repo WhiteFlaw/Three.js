@@ -306,6 +306,7 @@
 				if ( intersects.length > 0 && intersects[ 0 ].uv ) {
 
 					const uv = intersects[ 0 ].uv;
+					console.log(uv)
 					intersects[ 0 ].object.material.map.transformUv( uv );
 					canvas.setCrossPosition( uv.x, uv.y );
 

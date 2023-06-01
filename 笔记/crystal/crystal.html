@@ -70,7 +70,7 @@
         function createRoom() {
             const loader = new THREE.TextureLoader();
             const wallGeometry = new THREE.PlaneGeometry(8, 8);
-            const wallTexture = pixelTexture(loader.load('./texture/checker.png'));
+            const wallTexture = pixelTexture(loader.load('../texture/checker.png'));
             wallTexture.repeat.set(3, 3);
             const wallMaterial = new THREE.MeshPhongMaterial({ map: wallTexture, side: THREE.DoubleSide });
 
