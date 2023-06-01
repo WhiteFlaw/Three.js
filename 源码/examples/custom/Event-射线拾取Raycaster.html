@@ -127,6 +127,7 @@
 
             controls.update();
 
+            console.log(mouse)
             raycaster.setFromCamera(mouse, camera); // 更新射线, 将鼠标在标准设备上的位置和相机镜头的位置作为顶点形成射线
 
             const intersection = raycaster.intersectObject(mesh);
