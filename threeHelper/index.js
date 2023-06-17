@@ -1,19 +1,23 @@
 import * as THREE from 'three';
-
 import gsap from 'gsap';
-import { SphereSky } from './SphereSky.js';
+
+import { Sun } from './Sun.js';
 import { Ocean1 } from './Ocean1.js';
 import { Ocean2 } from './Ocean2.js';
+import { SphereSky } from './SphereSky.js';
 import { SpriteCanvas } from "./SpriteCanvas";
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { Light } from './Light.js';
+import { Lensflare } from './Lensflare.js';
+import { Raycaster } from './Raycaster.js';
+
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { ReflectorForSSRPass } from "three/examples/jsm/objects/ReflectorForSSRPass.js";
 
@@ -51,6 +55,7 @@ export default class THREEHelper {
         this.camera.updateProjectionMatrix();
     }
 
+    // renderer
     initRenderer() {
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
@@ -70,6 +75,44 @@ export default class THREEHelper {
         this.renderer.toneMappingExposure = exposure;
     }
 
+    // light
+    initLight() {
+        this.light = new Light();
+    }
+
+    defaultLight(color = 0xffffff) {
+        const ambient0 = this.light.create('ambient');
+        this.scene.add(ambient0);
+        const directional1 = this.light.create('directional', color, 0.3);
+        directional1.rePos(0, 10, 10);
+        const directional2 = this.light.create('directional', color, 0.3);
+        directional2.rePos(0, 10, -10);
+        const directional3 = this.light.create('directional', color, 0.8);
+        directional3.rePos(10, 10, 10);
+
+        directional1.limitShadow(10240, 10240);
+        directional2.limitShadow(10240, 10240);
+        directional3.limitShadow(10240, 10240);
+        this.scene.add(directional1, directional2, directional3);
+    }
+
+    createLight(type, color = 0xffffff, intensity = 1, name) {
+        return this.light.create(type, color, intensity, name);
+    }
+
+    getLight(name, help = false) {
+        help && console.warn(this.light.check());
+        return this.light.get(name);
+    }
+
+    checkLight() {
+        return this.light.check();
+    }
+
+    getLights() {
+        return this.light.lights;
+    }
+
     reposCamera(x, y, z) {
         this.camera.position.set(x, y, z);
     }
@@ -82,7 +125,7 @@ export default class THREEHelper {
     render() {
         let deltaTime = this.clock.getDelta();
         this.control && this.control.update();
-        this.ocean1 && this.ocean1.flow();
+        this.ocean && this.ocean.flow();
 
         for (let i = 0; i < this.mixers.length; i++) {
             this.mixers[i].update(deltaTime * 0.2);
@@ -156,28 +199,6 @@ export default class THREEHelper {
         });
     }
 
-    createLight(color = 0xffffff) {
-        this.ambientLight = new THREE.AmbientLight(color, 1);
-        this.scene.add(this.ambientLight);
-
-        const light1 = new THREE.DirectionalLight(color, 0.3);
-        light1.position.set(0, 10, 10);
-        const light2 = new THREE.DirectionalLight(color, 0.3);
-        light2.position.set(0, 10, -10);
-        const light3 = new THREE.DirectionalLight(color, 0.8);
-        light3.position.set(10, 10, 10);
-        light1.castShadow = true;
-        light2.castShadow = true;
-        light3.castShadow = true;
-        light1.shadow.mapSize.width = 10240;
-        light1.shadow.mapSize.height = 10240;
-        light2.shadow.mapSize.width = 10240;
-        light2.shadow.mapSize.height = 10240;
-        light3.shadow.mapSize.width = 10240;
-        light3.shadow.mapSize.height = 10240;
-        this.scene.add(light1, light2, light3);
-    }
-
     initEffect() {
         // 合成效果
         this.effectComposer = new EffectComposer(this.renderer);
@@ -233,7 +254,6 @@ export default class THREEHelper {
             textureHeight: this.height,
             color: 0x888888,
             useDepthTexture: true,
-
             distanceAttenuation: true,
         });
         this.groundReflector.maxDistance = 1000000;
@@ -244,21 +264,21 @@ export default class THREEHelper {
     }
 
     addOcean1(flowTexturePath = '', length = 100, width = 100, density = 1150, color = 0x21ccfc) {
-        this.ocean1 = new Ocean1(flowTexturePath, length, width, density, color);
-        this.scene.add(this.ocean1.mesh);
+        this.ocean = new Ocean1(flowTexturePath, length, width, density, color);
+        this.scene.add(this.ocean.mesh);
     }
 
     addOcean2(flowTexturePath = '', length = 100, width = 100, density = 1150, color = 0x21ccfc) {
-        this.ocean2 = new Ocean2(flowTexturePath, length, width, density, color);
-        this.scene.add(this.ocean2.mesh);
+        this.ocean = new Ocean2(flowTexturePath, length, width, density, color);
+        this.scene.add(this.ocean.mesh);
     }
 
-    addAxes(size = 10) {
+    addAxis(size = 10) {
         let axis = new THREE.AxesHelper(size);
         this.scene.add(axis);
     }
 
-    addControlToCamera() {
+    addCameraControl() {
         this.iskeyDown = false;
         this.domElement.addEventListener("mousedown", (e) => {
             this.iskeyDown = true;
@@ -287,83 +307,96 @@ export default class THREEHelper {
     }
 
     initRaycaster() {
-        this.raycaster = new THREE.Raycaster();
-        this.mouse = new THREE.Vector2();
-        this.domElement.addEventListener("click", (e) => {
-            this.updateMouse(e);
+        this.raycaster = new Raycaster(this.domElement);
+    }
+
+    setRaycasterMeshes(RaycasterMeshes) {
+        this.raycaster.setMeshArr(RaycasterMeshes);
+    }
+
+    createClickRaycaster(callback) {
+        this.raycaster.createClickRaycaster(callback);
+    }
+
+    createHoverRaycaster(callback) {
+        this.raycaster.createHoverRaycaster(callback);
+    }
+
+    rayHelper(meshArr, callback) {
+        this.createStar();
+        this.setRaycasterMeshes(meshArr);
+        this.createHoverRaycaster((intersects) => {
+            callback(intersects);
+            this.star.visible = true;
+            this.star.position.copy(intersects[0].point);
         });
     }
 
-    updateMouse(e) {
-        this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(e.clientY / (1080 * (window.innerWidth / 1920))) * 2 + 1;
-        // console.log(this.mouse.x, this.mouse.y, e.clientY);
-        return this.mouse;
-    }
-
-    onRay(meshArr, fn) {
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        let intersects = this.raycaster.intersectObjects(meshArr);
-        if (intersects.length > 0) {
-            fn(intersects);
-        }
-    }
-
-    visibleRay(meshArr, callback) { // 在首个命中物体上标识射线位置
-        this.initRaycaster();
-
+    createStar() {
         const geometry = new THREE.SphereGeometry(0.2, 32, 32);
         const material = new THREE.MeshBasicMaterial({
             color: 0xff3333,
             side: THREE.DoubleSide,
             transparent: true
         });
-        const plane = new THREE.Mesh(geometry, material);
-        this.scene.add(plane);
-        this.domElement.addEventListener("mousemove", (e) => {
-            this.updateMouse(e);
-            plane.visible = false;
-            this.onRay(meshArr, (intersects) => {
-                plane.visible = true;
-                callback(intersects);
-                plane.position.copy(intersects[0].point);
-            });
-        });
+        this.star = new THREE.Mesh(geometry, material);
+        this.star.visible = false;
+        this.scene.add(this.star);
     }
 
-    clickRay(meshArr, callback) {
-        this.initRaycaster();
-
-        this.domElement.addEventListener("click", (e) => {
-            this.updateMouse(e);
-            this.onRaycaster(meshArr, (intersects) => {
-                callback(intersects);
-            });
-        });
-    }
-
-    addSpriteText(text, position) { // 始终朝向屏幕的文字
+    addSpriteText(text, position) {
         let spriteText = new SpriteCanvas(this.camera, text, position);
         this.scene.add(spriteText.mesh);
         return spriteText;
     }
 
-    addSphereSky(minExposure = 0.4, maxExposure = 1) { // 人造天空
-        let uTime = { value: 0 };
+    initLensflare() {
+        this.lensflare = new Lensflare();
+    }
+
+    createLensflare(configArr = [], name) { // path, size, distance, color
+        this.lensflare.create(configArr, name);
+        return lensflare;
+    }
+
+    getLensflare(name) {
+        return this.lensflare.get(name);
+    }
+
+    getLensflares() {
+        return this.lensflare;
+    }
+
+    checkLensflare() {
+        console.log(this.lensflare.check())
+        return this.lensflare.check();
+    }
+
+    createSun(x = 500, y = 500, z = 40000, color = 0xffffcc) {
+        const sun = new Sun(x, y, z, color);
+        return sun;
+    }
+
+    addSphereSky(minExposure = 0.4, maxExposure = 1) { // 人造天空        
         let sphereSky = new SphereSky(10000, uTime, this.scene.environment);
-        sphereSky.createSun(500, 500, 4000, 0xffffcc);
         this.scene.add(sphereSky.mesh);
+
+        this.sun = this.createSun();
+        sphereSky.add(this.sun);
+
+        let uTime = { value: 0 };
+
         gsap.to(uTime, {
             value: 24,
             duration: 24,
             repeat: -1,
             ease: "linear",
             onUpdate: () => {
-                sphereSky.updateSun(uTime.value);
-                if(uTime.value > 6) {
+                this.sun.move(uTime.value);
+                if (uTime.value > 6) {
                     sphereSky.sun.visible = true;
                 }
-                if(uTime.value > 18) {
+                if (uTime.value > 18) {
                     sphereSky.sun.visible = false;
                 }
                 if (Math.abs(uTime.value - 12) < 4) {

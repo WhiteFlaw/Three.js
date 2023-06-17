@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import gsap from 'gsap';
 
 export class SphereSky {
   constructor(radius, uTime, envMap, nightMap) {
@@ -42,33 +41,4 @@ export class SphereSky {
     }
   }
 
-  createSun(x, y, z, color) {
-    // 创建太阳
-    let sunGeometry = new THREE.SphereGeometry(100, 32, 32);
-    let sunMaterial = new THREE.MeshStandardMaterial({
-      color: color,
-      emissive: 0xffffcc
-    })
-    this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    this.sun.position.set(x, y, z);
-    this.sun.visible = false;
-    
-    let sunLight = new THREE.DirectionalLight(color, 2);
-    sunLight.shadow.camera.near = 0.1;
-    sunLight.shadow.camera.far = 10000;
-    sunLight.shadow.camera.left = -1000;
-    sunLight.shadow.camera.right = 1000;
-    sunLight.shadow.camera.top = 1000;
-    sunLight.shadow.camera.bottom = 1000;
-    sunLight.shadow.camera.width = 20480;
-    sunLight.shadow.camera.height = 20480;
-    sunLight.shadow.radius = 5;
-    this.mesh.add(this.sun);
-    this.sun.add(sunLight);
-  }
-
-  updateSun(time) {
-    this.sun.position.z = Math.cos(((time - 6) * 2 * Math.PI) / 24) * 4000;
-    this.sun.position.y = Math.sin(((time - 6) * 2 * Math.PI) / 24) * 4000;
-  }
 }
