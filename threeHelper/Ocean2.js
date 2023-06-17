@@ -28,15 +28,18 @@ export class Ocean2 {
                 gl_FragColor = mix( gl_FragColor, vec4( 0.05, 0.3, 0.7, 1.0 ), vToEye.z*0.0005+0.5 );`
             );
     }
+
     setFlowTexture(flowTexturePath) {
         const loader = new THREE.TextureLoader();
         this.mesh.waterNormals = loader.load(flowTexturePath, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         })
     }
+    
     setColor(color) {
         this.mesh.color = color;
     }
+
     setSize(length, width) { // 性能不好
         const oceanGeometry = new THREE.PlaneGeometry(width, length);
         this.mesh = new Water(oceanGeometry, {
@@ -47,6 +50,7 @@ export class Ocean2 {
         });
         this.mesh.rotation.x = Math.PI * -0.5;
     }
+
     setDensity(density) {
         if (!this.waterTexture()) {
             console.warn('体现密度需要水纹贴图');
@@ -54,12 +58,14 @@ export class Ocean2 {
         }
         this.mesh.textureWidth = textureHeight = density;
     }
+
     waterTexture() {
         if (this.flowTexture) {
             return true;
         }
         return false;
     }
+
     setDensity(density) {
         this.mesh.textureWidth = textureHeight = density;
     }

@@ -27,15 +27,18 @@ export class Ocean1 { // constructor内外的属性有什么区别?
         });
         this.mesh.rotation.x = Math.PI * -0.5;
     }
+
     setFlowTexture(flowTexturePath) {
         const loader = new THREE.TextureLoader();
         this.mesh.waterNormals = loader.load(flowTexturePath, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         })
     }
+
     setColor(color) {
         this.mesh.color = color;
     }
+
     setSize(length, width) { // 性能不好
         const oceanGeometry = new THREE.PlaneGeometry(width, length);
         this.mesh = new Water(oceanGeometry, {
@@ -46,12 +49,14 @@ export class Ocean1 { // constructor内外的属性有什么区别?
         });
         this.mesh.rotation.x = Math.PI * -0.5;
     }
+
     waterTexture() {
         if (this.flowTexture) {
             return true;
         }
         return false;
     }
+
     setDensity(density) {
         if (!this.waterTexture()) {
             console.warn('体现密度需要水纹贴图');
@@ -59,6 +64,7 @@ export class Ocean1 { // constructor内外的属性有什么区别?
         }
         this.mesh.textureWidth = textureHeight = density;
     }
+
     setVelocity(velocity) {
         if (!this.waterTexture()) {
             console.warn('体现流速需要水纹贴图');
@@ -72,6 +78,7 @@ export class Ocean1 { // constructor内外的属性有什么区别?
         }
         this.velocity = s;
     }
+    
     flow() {
         this.mesh.material.uniforms['time'].value += this.velocity / 60.0;
     }
