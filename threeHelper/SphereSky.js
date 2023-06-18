@@ -2,6 +2,10 @@ import * as THREE from 'three';
 
 export class SphereSky {
   constructor(radius, uTime, envMap, nightMap) {
+    this.init(radius, uTime, envMap, nightMap);
+  }
+
+  init(radius, uTime, envMap, nightMap) {
     let geometry = new THREE.SphereGeometry(radius, 32, 32);
     let material = new THREE.MeshBasicMaterial({
       map: envMap,
@@ -40,5 +44,4 @@ export class SphereSky {
       )
     }
   }
-
 }

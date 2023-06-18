@@ -1,16 +1,17 @@
 import * as THREE from 'three';
+import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 
-export class Lensflare {
+export class Lensflares {
     constructor() {
         this.lensflares = new Map();
         this.max = -1;
     }
 
-    create(configArr, name = `lensflare${thia.max}`) {
+    create(configArr, name = `lensflare${this.max}`) {
         this.max++;
         const lensflare = new LensflareTool();
-        for (let i = 0; i < configArr[0].length; i++) {
-            lensflare.addElement(...configArr[0][i]);
+        for (let i = 0; i < configArr.length; i++) {
+            lensflare.addElement(...configArr[i]);
         }
         lensflare.name = name;
         this.lensflares.set(name, lensflare);
@@ -31,7 +32,7 @@ class LensflareTool {
         this.lensflare = new Lensflare();
         this.loader = new THREE.TextureLoader();
     }
-
+    
     addElement(path, size, distance, color) { // 增加光晕点
         const texture = this.loader.load(path);
         this.lensflare.addElement(new LensflareElement(texture, size, distance, color));
