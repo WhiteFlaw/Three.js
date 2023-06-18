@@ -8,21 +8,22 @@ export class Light {
 
     create(type, color, intensity, name) {
         this.max++;
-        switch (type, name = `${type}${max}`) {
+        const newName = name ? name : `${type}${this.max}`;
+        switch (type) {
             case 'ambient':
-                createAmbientLight(color, intensity, name);
+                this.createAmbientLight(color, intensity, newName);
                 break;
             case 'directional':
-                createDirectionalLight(color, intensity, name);
+                this.createDirectionalLight(color, intensity, newName);
                 break;
             case 'spot':
-                createSpotLight(color, intensity, name);
+                this.createSpotLight(color, intensity, newName);
                 break;
             case 'points':
-                createPointLight(color, intensity, name);
+                this.createPointLight(color, intensity, newName);
                 break;
         }
-        return this.light.get(name);
+        return this.lights.get(newName);
     }
 
     get(name) {
@@ -52,7 +53,7 @@ export class Light {
     }
 
     createPointLight(color, intensity, name) {
-        const point = new Points(color, intensity);
+        const point = new Point(color, intensity);
         point.name = name;
         this.lights.set(name, point);
     }
@@ -65,7 +66,7 @@ class Ambient {
         this.color = color;
         this.intensity = intensity;
         this.light = null;
-        init();
+        this.init();
     }
 
     init() {
@@ -93,11 +94,11 @@ class Directional {
         this.color = color;
         this.intensity = intensity;
         this.light = null;
-        init();
+        this.init();
     }
 
     init() {
-        this.light = new THREE.AmbientLight(this.color, this.intensity);
+        this.light = new THREE.DirectionalLight(this.color, this.intensity);
         this.light.castShadow = true;
     }
 
@@ -127,9 +128,9 @@ class Directional {
         return directionHelper;
     }
 
-    limitShdow(width, height) {
-        width && (this.light.shadow.mapSize.width = width);
-        height && (this.light.shadow.mapSize.width = height);
+    limitShadow(width, height) {
+        const vec = new THREE.Vector2(width, height)
+        this.light.mapSize = vec;
     }
     
     setRadius(radius) {
@@ -161,11 +162,11 @@ class Spot {
         this.color = color;
         this.intensity = intensity;
         this.light = null;
-        init();
+        this.init();
     }
 
     init() {
-        this.light = new THREE.AmbientLight(this.color, this.intensity);
+        this.light = new THREE.SpotLight(this.color, this.intensity);
         this.light.castShadow = true;
     }
 
@@ -208,9 +209,9 @@ class Spot {
         this.light.shadow.camera.fov = fov;
     }
 
-    limitShdow(width, height) {
-        width && (this.light.shadow.mapSize.width = width);
-        height && (this.light.shadow.mapSize.width = height);
+    limitShadow(width, height) {
+        width && (this.light.mapSize.width = width);
+        height && (this.light.mapSize.width = height);
     }
 
     setPenumbra(penumbra) { // 光暗边缘模糊度
@@ -229,16 +230,16 @@ class Spot {
     }
 }
 
-class Points {
+class Point {
     constructor(color, intensity) {
         this.color = color;
         this.intensity = intensity;
         this.light = null;
-        init();
+        this.init();
     }
 
     init() {
-        this.light = new THREE.AmbientLight(this.color, this.intensity);
+        this.light = new THREE.PointLight(this.color, this.intensity);
         this.light.castShadow = true;
     }
 
@@ -262,9 +263,9 @@ class Points {
         this.light.shadow.radius = radius;
     }
 
-    limitShdow(width, height) {
-        width && (this.light.shadow.mapSize.width = width);
-        height && (this.light.shadow.mapSize.width = height);
+    limitShadow(width, height) {
+        width && (this.light.mapSize.width = width);
+        height && (this.light.mapSize.width = height);
     }
 
     setPower(power) { // 功率, 会影响Intensity

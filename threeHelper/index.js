@@ -7,7 +7,7 @@ import { Ocean2 } from './Ocean2.js';
 import { SphereSky } from './SphereSky.js';
 import { SpriteCanvas } from "./SpriteCanvas";
 import { Light } from './Light.js';
-import { Lensflare } from './Lensflare.js';
+import { Lensflares } from './Lensflare.js';
 import { Raycaster } from './Raycaster.js';
 
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
@@ -30,6 +30,7 @@ export default class THREEHelper {
         this.width = this.domElement.clientWidth;
         this.height = this.domElement.clientHeight;
         this.updateMeshArr = [];
+        this.uTime = { value: 0 };
 
         this.init();
     }
@@ -81,19 +82,17 @@ export default class THREEHelper {
     }
 
     defaultLight(color = 0xffffff) {
-        const ambient0 = this.light.create('ambient');
-        this.scene.add(ambient0);
-        const directional1 = this.light.create('directional', color, 0.3);
+        const ambient0 = this.createLight('ambient', color);
+        const directional1 = this.createLight('directional', color, 0.3);
         directional1.rePos(0, 10, 10);
-        const directional2 = this.light.create('directional', color, 0.3);
+        const directional2 = this.createLight('directional', color, 0.3);
         directional2.rePos(0, 10, -10);
-        const directional3 = this.light.create('directional', color, 0.8);
+        const directional3 = this.createLight('directional', color, 0.8);
         directional3.rePos(10, 10, 10);
-
         directional1.limitShadow(10240, 10240);
         directional2.limitShadow(10240, 10240);
         directional3.limitShadow(10240, 10240);
-        this.scene.add(directional1, directional2, directional3);
+        this.scene.add(ambient0.light, directional1.light, directional2.light, directional3.light);
     }
 
     createLight(type, color = 0xffffff, intensity = 1, name) {
@@ -106,10 +105,12 @@ export default class THREEHelper {
     }
 
     checkLight() {
+        console.warn(this.light.check())
         return this.light.check();
     }
 
     getLights() {
+        console.warn(this.light.lights);
         return this.light.lights;
     }
 
@@ -351,70 +352,99 @@ export default class THREEHelper {
     }
 
     initLensflare() {
-        this.lensflare = new Lensflare();
+        this.lensflares = new Lensflares();
     }
 
     createLensflare(configArr = [], name) { // path, size, distance, color
-        this.lensflare.create(configArr, name);
+        const lensflare = this.lensflares.create(configArr, name);
         return lensflare;
     }
 
     getLensflare(name) {
-        return this.lensflare.get(name);
+        return this.lensflares.get(name);
     }
 
     getLensflares() {
-        return this.lensflare;
+        return this.lensflares;
     }
 
     checkLensflare() {
-        console.log(this.lensflare.check())
-        return this.lensflare.check();
+        console.log(this.lensflares.check())
+        return this.lensflares.check();
     }
 
-    createSun(x = 500, y = 500, z = 40000, color = 0xffffcc) {
-        const sun = new Sun(x, y, z, color);
+    createSun(useLensFlare = false) {
+        const sun = new Sun();
+        if (useLensFlare) {
+            if (!this.lensflares) {
+                this.initLensflare();
+            }
+            const configArr = [
+                ["./textures/lensflare/lensflare0.png", 700, 0],
+                ["./textures/lensflare/lensflare0.png", 300, 0.6],
+                ["./textures/lensflare/lensflare0.png", 200, 0.75],
+                ["./textures/lensflare/lensflare0.png", 150, 0.9],
+                ["./textures/lensflare/lensflare0.png", 100, 1],
+            ];
+            const lensflare = this.createLensflare(configArr);
+            sun.light.light.add(lensflare.lensflare);
+        }
+        this.sun = sun;
+        this.scene.add(sun.sun);
         return sun;
     }
 
-    addSphereSky(minExposure = 0.4, maxExposure = 1) { // 人造天空        
-        let sphereSky = new SphereSky(10000, uTime, this.scene.environment);
-        this.scene.add(sphereSky.mesh);
+    rePosSun(x, y, z) {
+        this.sun.rePos(x, y, z);
+    }
 
-        this.sun = this.createSun();
-        sphereSky.add(this.sun);
-
-        let uTime = { value: 0 };
-
-        gsap.to(uTime, {
+    sunTrack() { // Sun运动
+        gsap.to(this.uTime, {
             value: 24,
             duration: 24,
             repeat: -1,
             ease: "linear",
             onUpdate: () => {
-                this.sun.move(uTime.value);
-                if (uTime.value > 6) {
-                    sphereSky.sun.visible = true;
+                this.sun.sun.position.z = Math.cos(((this.uTime.value - 6) * 2 * Math.PI) / 24) * 4000;
+                this.sun.sun.position.y = Math.sin(((this.uTime.value - 6) * 2 * Math.PI) / 24) * 4000;
+
+                if (this.uTime.value > 6) { // 早6
+                    this.sun.sun.visible = true;
                 }
-                if (uTime.value > 18) {
-                    sphereSky.sun.visible = false;
-                }
-                if (Math.abs(uTime.value - 12) < 4) {
-                    // 昼
-                    this.renderer.toneMappingExposure = maxExposure;
-                }
-                if (Math.abs(uTime.value - 12) > 6) {
-                    // 夜
-                    this.renderer.toneMappingExposure = minExposure;
-                }
-                if (Math.abs(uTime.value - 12) >= 4 && Math.abs(uTime.value - 12) <= 6) {
-                    // 昼夜交替阶段4-6, 2h
-                    let strength = 1 - (Math.abs(uTime.value - 12) - 4) / 2; // 光照强度
-                    strength < 0.3 ? (strength = 0.3) : (strength = strength);
-                    this.renderer.toneMappingExposure = strength;
+                if (this.uTime.value > 18) { // 晚6
+                    this.sun.sun.visible = false;
                 }
             },
         });
+    }
+
+    dayLight() { // 日光环境变化
+        gsap.to(this.uTime, {
+            value: 24,
+            duration: 24,
+            repeat: -1,
+            ease: "linear",
+            onUpdate: () => {
+                if (Math.abs(this.uTime.value - 12) < 4) { // 早8
+                    this.renderer.toneMappingExposure = 1;
+                }
+                if (Math.abs(this.uTime.value - 12) > 6) { // 晚8
+                    this.renderer.toneMappingExposure = 0.4;
+                }
+                if (Math.abs(this.uTime.value - 12) >= 4 && Math.abs(this.uTime.value - 12) <= 6) {
+                    // 昼夜交替6-8
+                    let strength = 1 - (Math.abs(this.uTime.value - 12) - 4) / 2; // 光照强度
+                    strength < 0.3 ? (strength = 0.3) : (strength = strength);
+                    this.renderer.toneMappingExposure = strength;
+                }
+            }
+        });
+    }
+
+    addSphereSky() { // 人造天空
+        let sphereSky = new SphereSky(10000, this.uTime, this.scene.environment);
+        this.scene.add(sphereSky.mesh);
+
         return sphereSky;
     }
 }
