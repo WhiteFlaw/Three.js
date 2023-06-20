@@ -30,7 +30,8 @@ export default class THREEHelper {
         this.width = this.domElement.clientWidth;
         this.height = this.domElement.clientHeight;
         this.updateMeshArr = [];
-        this.uTime = { value: 0 };
+        this.uTime = { value: 15 };
+        this.isDay = false;
 
         this.init();
     }
@@ -66,7 +67,7 @@ export default class THREEHelper {
         this.renderer.shadowMap.enabled = true;
         this.renderer.useLegacyLights = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1; // 曝光度
+        this.changeExposure(1); // 曝光度
         this.renderer.setSize(this.width, this.height);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.domElement.appendChild(this.renderer.domElement);
@@ -89,9 +90,9 @@ export default class THREEHelper {
         directional2.rePos(0, 10, -10);
         const directional3 = this.createLight('directional', color, 0.8);
         directional3.rePos(10, 10, 10);
-        directional1.limitShadow(10240, 10240);
+        /* directional1.limitShadow(10240, 10240);
         directional2.limitShadow(10240, 10240);
-        directional3.limitShadow(10240, 10240);
+        directional3.limitShadow(10240, 10240); */
         this.scene.add(ambient0.light, directional1.light, directional2.light, directional3.light);
     }
 
@@ -171,6 +172,17 @@ export default class THREEHelper {
         });
     }
 
+    videoLoader(path) {
+        let video = document.createElement('video');
+        video.src = path;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.play();
+        let videoTexture = new THREE.VideoTexture(video);
+        return videoTexture;
+    }
+
     setBackgroundImg(path) {
         const loader = new THREE.TextureLoader();
         return new Promise((resolve, reject) => {
@@ -225,7 +237,7 @@ export default class THREEHelper {
         this.unrealBloomPass = new UnrealBloomPass();
         this.unrealBloomPass.enabled = false;
         this.unrealBloomPass.threshold = 0.1;
-        this.unrealBloomPass.strength = 1;
+        this.unrealBloomPass.strength = 0.5;
         this.unrealBloomPass.radius = 2;
         this.effectComposer.addPass(this.unrealBloomPass);
 
@@ -418,24 +430,37 @@ export default class THREEHelper {
         });
     }
 
-    dayLight() { // 日光环境变化
+    dayLight(dayCallback, nightCallback) { // 日光环境变化
         gsap.to(this.uTime, {
             value: 24,
             duration: 24,
             repeat: -1,
             ease: "linear",
             onUpdate: () => {
-                if (Math.abs(this.uTime.value - 12) < 4) { // 早8
-                    this.renderer.toneMappingExposure = 1;
+                console.log(this.uTime);
+                if (
+                    this.uTime.value > 6 &&
+                    this.uTime.value <= 18 &&
+                    this.isDay === false
+                ) { // 早8
+                    this.isDay = true;
+                    this.changeExposure(1);
+                    dayCallback && dayCallback();
                 }
-                if (Math.abs(this.uTime.value - 12) > 6) { // 晚8
-                    this.renderer.toneMappingExposure = 0.4;
+                if (
+                    (this.uTime.value > 18 ||
+                    this.uTime.value <= 6) &&
+                    this.isDay === true
+                ) { // 晚8
+                    this.isDay = false;
+                    this.changeExposure(0.4);
+                    nightCallback && nightCallback();
                 }
                 if (Math.abs(this.uTime.value - 12) >= 4 && Math.abs(this.uTime.value - 12) <= 6) {
                     // 昼夜交替6-8
                     let strength = 1 - (Math.abs(this.uTime.value - 12) - 4) / 2; // 光照强度
                     strength < 0.3 ? (strength = 0.3) : (strength = strength);
-                    this.renderer.toneMappingExposure = strength;
+                    this.changeExposure(strength);
                 }
             }
         });
@@ -447,4 +472,6 @@ export default class THREEHelper {
 
         return sphereSky;
     }
+
+
 }

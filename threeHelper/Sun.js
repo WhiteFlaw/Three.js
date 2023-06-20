@@ -15,10 +15,11 @@ export class Sun {
 
         const light = new Light();
         this.light = light.create('directional', 0xffffcc, 2);
-        this.light.setCameraArea(1000, 1000, 1000, 1000);
+        this.light.setCameraArea(1000, -1000, -1000, 1000);
         this.light.setCameraLength(0.1, 10000);
+        this.light.limitShadow(20480, 20480);
         this.light.setRadius(5);
-        this.sun.add(this.light.light);
+        this.sun.add(this.light.light); // 我是傻逼
         return this.sun;
     }
 
