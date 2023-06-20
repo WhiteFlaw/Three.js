@@ -130,7 +130,7 @@ class Directional {
 
     limitShadow(width, height) {
         const vec = new THREE.Vector2(width, height)
-        this.light.mapSize = vec;
+        this.light.shadow.mapSize = vec;
     }
     
     setRadius(radius) {
@@ -210,8 +210,8 @@ class Spot {
     }
 
     limitShadow(width, height) {
-        width && (this.light.mapSize.width = width);
-        height && (this.light.mapSize.width = height);
+        const vec = new THREE.Vector2(width, height)
+        this.light.shadow.mapSize = vec;
     }
 
     setPenumbra(penumbra) { // 光暗边缘模糊度
@@ -264,8 +264,8 @@ class Point {
     }
 
     limitShadow(width, height) {
-        width && (this.light.mapSize.width = width);
-        height && (this.light.mapSize.width = height);
+        const vec = new THREE.Vector2(width, height)
+        this.light.shadow.mapSize = vec;
     }
 
     setPower(power) { // 功率, 会影响Intensity

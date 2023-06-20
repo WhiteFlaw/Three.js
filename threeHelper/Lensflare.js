@@ -10,7 +10,7 @@ export class Lensflares {
     create(configArr, name = `lensflare${this.max}`) {
         this.max++;
         const lensflare = new LensflareTool();
-        for (let i = 0; i < configArr.length; i++) {
+        for (let i = 1; i < configArr.length; i++) {
             lensflare.addElement(...configArr[i]);
         }
         lensflare.name = name;

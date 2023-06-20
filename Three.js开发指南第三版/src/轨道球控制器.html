@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>平行光</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link type="text/css" rel="stylesheet" href="main.css">
+</head>
+
+<body>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+                    "three/addons/": "../jsm/"
+				}
+			}
+		</script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+
+        let scene, camera, renderer, controls, plane, sphere, directionalLightHelper;
+
+        (function init() {
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.set(-30, 40, 30);
+            camera.lookAt(scene.position);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.setPixelRatio);
+            renderer.setClearColor(new THREE.Color(0x000000));
+            renderer.useLegacyLights = false;
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true; // 启用阴影
+            document.body.appendChild(renderer.domElement);
+
+            controls = new TrackballControls(camera, renderer.domElement);
+            controls.rotateSpeed = 1.0;
+            controls.zoomSpeed = 1.0;
+            controls.panSpeed = 1.0;
+
+            const axes = new THREE.AxesHelper(20);
+            scene.add(axes);
+
+            const lambertMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+
+            const planeGeometry = new THREE.PlaneGeometry(60, 60);
+            plane = new THREE.Mesh(planeGeometry, lambertMaterial);
+            plane.rotation.x = -0.5 * Math.PI;
+            plane.receiveShadow = true; // 可接受阴影
+            scene.add(plane);
+
+            const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+            const cube = new THREE.Mesh(cubeGeometry, lambertMaterial);
+            cube.position.set(-4, 2, 0);
+            cube.castShadow = true; // 可产生阴影
+            scene.add(cube);
+
+            const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
+            sphere = new THREE.Mesh(sphereGeometry, lambertMaterial);
+            sphere.position.set(5, 3, 2);
+            sphere.castShadow = true; // 可产生阴影
+            scene.add(sphere);
+
+            const bulb = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // (颜色, 强度), 强度默认1, 环境光无法产生阴影
+            ambientLight.position.set(-20, 20, -15);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff);
+            directionalLight.position.set(-20, 13, 0);
+            directionalLight.castShadow = true;
+            directionalLight.decay = 0.1; // 衰减速度
+            directionalLight.intensity = 3; // 强度
+            // directionalLight.shadow.bias = -0.5; // 阴影偏移, 虽然有时候效果看起来像阴影截断
+            //  directionalLight.mapSize = new THREE.Vector2(1024, 1024); // 也可以使用Vector2
+            directionalLight.shadow.camera.far = 45; // 
+            directionalLight.shadow.camera.near = 10;
+            directionalLight.shadow.camera.left = 4;
+            directionalLight.shadow.camera.right = -4;
+            directionalLight.shadow.camera.bottom = 4;
+            directionalLight.shadow.camera.top = -6;
+            directionalLight.target = sphere;
+            directionalLight.add(bulb);
+            scene.add(directionalLight);
+
+            const directionCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+            scene.add(directionCameraHelper);
+
+            directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight);
+            scene.add(directionalLightHelper);
+        })()
+
+        let num = -0.05
+        function sphereAnim() {
+            if (sphere.position.z < -10) {
+                num = 0.1;
+            }
+            if (sphere.position.z > 10) {
+                num = -0.1;
+            }
+            sphere.position.z += num;
+        }
+
+        const clock = new THREE.Clock();
+        function render() {
+            renderer.render(scene, camera);
+            controls.update(clock.getDelta());
+            directionalLightHelper.update();
+        }
+
+        (function animate() {
+            requestAnimationFrame(animate);
+            sphereAnim();
+            render();
+        })()
+    </script>
+
+</body>
+
+</html>
