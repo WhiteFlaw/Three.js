@@ -1,23 +1,25 @@
-import * as THREE from 'three';
 import gsap from 'gsap';
+import * as THREE from 'three';
 
 import { Sun } from './Sun.js';
+import { Light } from './Light.js';
+import { Bar3d } from './Bar3d.js';
 import { Ocean1 } from './Ocean1.js';
 import { Ocean2 } from './Ocean2.js';
-import { SphereSky } from './SphereSky.js';
-import { SpriteCanvas } from "./SpriteCanvas";
-import { Light } from './Light.js';
-import { Lensflares } from './Lensflare.js';
+import { Axis3d } from './Axis3d.js';
 import { Raycaster } from './Raycaster.js';
+import { SphereSky } from './SphereSky.js';
+import { Lensflares } from './Lensflare.js';
+import { SpriteCanvas } from "./SpriteCanvas";
 
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { SMAAPass } from "three/examples/jsm/postprocessing/SMAAPass";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 import { ReflectorForSSRPass } from "three/examples/jsm/objects/ReflectorForSSRPass.js";
 
@@ -50,7 +52,7 @@ export default class THREEHelper {
         this.scene.background = new THREE.Color(0xcccccc);
     }
 
-    initCamera(x = 0, y = 50, z = 320) {
+    initCamera(x = 0, y = 0, z = 50) {
         this.camera = new THREE.PerspectiveCamera(45, this.width / this.height, 0.0000001, 10000);
         this.camera.position.set(x, y, z);
         this.camera.aspect = this.width / this.height;
@@ -73,7 +75,7 @@ export default class THREEHelper {
         this.domElement.appendChild(this.renderer.domElement);
     }
 
-    changeExposure(exposure) { // 调节曝光度
+    changeExposure(exposure) { // 场地曝光度
         this.renderer.toneMappingExposure = exposure;
     }
 
@@ -90,9 +92,6 @@ export default class THREEHelper {
         directional2.rePos(0, 10, -10);
         const directional3 = this.createLight('directional', color, 0.8);
         directional3.rePos(10, 10, 10);
-        /* directional1.limitShadow(10240, 10240);
-        directional2.limitShadow(10240, 10240);
-        directional3.limitShadow(10240, 10240); */
         this.scene.add(ambient0.light, directional1.light, directional2.light, directional3.light);
     }
 
@@ -121,7 +120,7 @@ export default class THREEHelper {
 
     initControl() {
         this.control = new OrbitControls(this.camera, this.renderer.domElement);
-        this.control.target.set(0, 15, 0);
+        this.control.target.set(0, 0, 0); // 旋转中心
     }
 
     render() {
@@ -143,7 +142,7 @@ export default class THREEHelper {
     gltfLoader(dracoPath, gltfPath) {
         const gltfLoader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath(dracoPath); // 引导至具体模型文件所在目录
+        dracoLoader.setDecoderPath(dracoPath); // 引导至draco_decoder.js所在目录, 这个文件可以从three模块内复制
         dracoLoader.setDecoderConfig({ type: "js" });
         dracoLoader.preload();
         gltfLoader.setDRACOLoader(dracoLoader);
@@ -183,7 +182,7 @@ export default class THREEHelper {
         return videoTexture;
     }
 
-    setBackgroundImg(path) {
+    setBackgroundImg(path) { // 设置图片背景
         const loader = new THREE.TextureLoader();
         return new Promise((resolve, reject) => {
             loader.load(path, (texture) => {
@@ -198,13 +197,13 @@ export default class THREEHelper {
         });
     }
 
-    setBackgroundHDR(url) {
-        // 设置场地背景为HDR
+    setBackgroundHDR(url) { // 设置HDR背景
         return new Promise((resolve, reject) => {
             this.hdrLoader(url).then((texture) => {
                 texture.mapping = THREE.EquirectangularReflectionMapping;
                 texture.anisotropy = 16;
                 texture.format = THREE.RGBAFormat;
+
                 this.scene.background = texture;
                 this.scene.environment = texture;
                 resolve(texture);
@@ -234,12 +233,12 @@ export default class THREEHelper {
         this.effectComposer.addPass(smaaPass);
 
         // 发光效果
-        this.unrealBloomPass = new UnrealBloomPass();
+        /* this.unrealBloomPass = new UnrealBloomPass();
         this.unrealBloomPass.enabled = false;
         this.unrealBloomPass.threshold = 0.1;
         this.unrealBloomPass.strength = 0.5;
         this.unrealBloomPass.radius = 2;
-        this.effectComposer.addPass(this.unrealBloomPass);
+        this.effectComposer.addPass(this.unrealBloomPass); */
 
         // SSR屏幕反射
         // this.addReflectorPlane();
@@ -259,7 +258,7 @@ export default class THREEHelper {
         // this.effectComposer.addPass(new ShaderPass(GammaCorrectionShader));
     }
 
-    addReflectorPlane(size = new THREE.Vector2(100, 100)) {
+    addReflectorPlane(size = new THREE.Vector2(100, 100)) { // 屏幕反射
         let geometry = new THREE.PlaneGeometry(size.x, size.y);
         this.groundReflector = new ReflectorForSSRPass(geometry, {
             clipBias: 0.0003,
@@ -276,13 +275,13 @@ export default class THREEHelper {
         this.scene.add(this.groundReflector);
     }
 
-    addOcean1(flowTexturePath = '', length = 100, width = 100, density = 1150, color = 0x21ccfc) {
+    addOcean1(flowTexturePath = '', length = 100, width = 100, density = 1150, color = 0x21ccfc) { // ocean必需波纹贴图
         this.ocean = new Ocean1(flowTexturePath, length, width, density, color);
         this.scene.add(this.ocean.mesh);
     }
 
-    addOcean2(flowTexturePath = '', length = 100, width = 100, density = 1150, color = 0x21ccfc) {
-        this.ocean = new Ocean2(flowTexturePath, length, width, density, color);
+    addOcean2(length = 100, width = 100, density = 1150, color = 0x21ccfc) {
+        this.ocean = new Ocean2(length, width, density, color);
         this.scene.add(this.ocean.mesh);
     }
 
@@ -336,25 +335,21 @@ export default class THREEHelper {
     }
 
     rayHelper(meshArr, callback) {
-        this.createStar();
-        this.setRaycasterMeshes(meshArr);
-        this.createHoverRaycaster((intersects) => {
-            callback(intersects);
-            this.star.visible = true;
-            this.star.position.copy(intersects[0].point);
-        });
-    }
-
-    createStar() {
         const geometry = new THREE.SphereGeometry(0.2, 32, 32);
         const material = new THREE.MeshBasicMaterial({
             color: 0xff3333,
             side: THREE.DoubleSide,
             transparent: true
         });
-        this.star = new THREE.Mesh(geometry, material);
-        this.star.visible = false;
-        this.scene.add(this.star);
+        const star = new THREE.Mesh(geometry, material);
+        star.visible = false;
+        this.scene.add(star);
+        this.setRaycasterMeshes(meshArr);
+        this.createHoverRaycaster((intersects) => {
+            callback(intersects);
+            star.visible = true;
+            star.position.copy(intersects[0].point);
+        });
     }
 
     addSpriteText(text, position) {
@@ -367,7 +362,7 @@ export default class THREEHelper {
         this.lensflares = new Lensflares();
     }
 
-    createLensflare(configArr = [], name) { // path, size, distance, color
+    createLensflare(configArr = [], name) { // [{ path, size, distance, color}, ...]
         const lensflare = this.lensflares.create(configArr, name);
         return lensflare;
     }
@@ -406,10 +401,6 @@ export default class THREEHelper {
         return sun;
     }
 
-    rePosSun(x, y, z) {
-        this.sun.rePos(x, y, z);
-    }
-
     sunTrack() { // Sun运动
         gsap.to(this.uTime, {
             value: 24,
@@ -437,7 +428,6 @@ export default class THREEHelper {
             repeat: -1,
             ease: "linear",
             onUpdate: () => {
-                console.log(this.uTime);
                 if (
                     this.uTime.value > 6 &&
                     this.uTime.value <= 18 &&
@@ -466,12 +456,22 @@ export default class THREEHelper {
         });
     }
 
-    addSphereSky() { // 人造天空
+    addSphereSky() { // 天空球
         let sphereSky = new SphereSky(10000, this.uTime, this.scene.environment);
         this.scene.add(sphereSky.mesh);
 
         return sphereSky;
     }
 
+    addAxis3d(category, space, size) { // 3D网格坐标系
+        let axis3d = new Axis3d(category, space, size);
+        this.scene.add(axis3d.mesh);
+        return axis3d;
+    }
 
+    addBar3d(data, type) { // 柱形图
+        let bar3d = new Bar3d(data, type);
+        this.scene.add(bar3d.mesh);
+        return bar3d;
+    }
 }

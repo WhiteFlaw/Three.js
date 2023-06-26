@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>uv映射</title>
+    <title>纹理重复</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <link type="text/css" rel="stylesheet" href="main.css">
@@ -29,7 +29,7 @@
             scene = new THREE.Scene();
 
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-            camera.position.set(0, 0, 30);
+            camera.position.set(0, 20, 0);
             camera.lookAt(scene.position);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -47,57 +47,22 @@
 
             const textureLoader = new THREE.TextureLoader();
             textureLoader.load('../assets/textures/liv.jpg', function (texture) {
-
-                const planeGeometry = new THREE.BoxGeometry(10, 10, 10);
-                console.log(planeGeometry.attributes.uv)
-                const uvs = new Float32Array([ // 每个面4个点, 6个面
-                    // 这些值必须在0和1之间,参考raycaster取到的uv, 也是在0-1之间
-                    // uv操作通常在专业软件中完成
-                    0, 1,
-                    1, 1,
-                    0, 0.2,
-                    1, 0,
-
-                    0, 1,
-                    1, 1,
-                    0, 0.2,
-                    1, 0,
-
-                    0, 1,
-                    1, 1,
-                    0, 0.2,
-                    1, 0,
-
-                    0, 1, // 左上
-                    1, 1, // 右上
-                    0, 0, // 左下
-                    1, 0, // 右下
-
-                    0, 1,
-                    1, 1,
-                    0, 0.2,
-                    1, 0,
-
-                    0, 1,
-                    1, 1,
-                    0, 0.2,
-                    1, 0
-                ]);
-                // 设置几何体attributes属性的位置normal属性
-                planeGeometry.attributes.uv.array = uvs;
-
+                const planeGeometry = new THREE.PlaneGeometry(20, 20);
                 const planeMaterial = new THREE.MeshLambertMaterial({
                     color: 0xAAAAAA,
-                    map: texture
+                    map: texture,
+                    side: THREE.DoubleSide
                 });
+
+                planeMaterial.map.wrapS = THREE.RepeatWrapping;
+                planeMaterial.map.wrapT = THREE.RepeatWrapping;
+                planeMaterial.map.repeat.set(2, 2);
 
                 plane = new THREE.Mesh(planeGeometry, planeMaterial);
                 plane.rotation.x = -0.5 * Math.PI;
                 plane.receiveShadow = true;
                 scene.add(plane);
-
             });
-
         })()
 
         function render() {
