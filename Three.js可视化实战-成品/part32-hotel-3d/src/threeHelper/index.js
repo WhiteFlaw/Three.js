@@ -4,8 +4,6 @@ import * as THREE from 'three';
 import { Sun } from './Sun.js';
 import { Light } from './Light.js';
 import { Bar3d } from './Bar3d.js';
-import { Pie3d1 } from './Pie3d1.js';
-import { Pie3d2 } from './Pie3d2.js';
 import { Ocean1 } from './Ocean1.js';
 import { Ocean2 } from './Ocean2.js';
 import { Axis3d } from './Axis3d.js';
@@ -235,12 +233,12 @@ export default class THREEHelper {
         this.effectComposer.addPass(smaaPass);
 
         // 发光效果
-        /* this.unrealBloomPass = new UnrealBloomPass();
+        this.unrealBloomPass = new UnrealBloomPass();
         this.unrealBloomPass.enabled = false;
         this.unrealBloomPass.threshold = 0.1;
         this.unrealBloomPass.strength = 0.5;
         this.unrealBloomPass.radius = 2;
-        this.effectComposer.addPass(this.unrealBloomPass); */
+        this.effectComposer.addPass(this.unrealBloomPass);
 
         // SSR屏幕反射
         // this.addReflectorPlane();
@@ -382,7 +380,7 @@ export default class THREEHelper {
         return this.lensflares.check();
     }
 
-    createSun(useLensFlare = false) {
+    createSun(x, y, z, useLensFlare = false) {
         const sun = new Sun();
         if (useLensFlare) {
             if (!this.lensflares) {
@@ -399,6 +397,7 @@ export default class THREEHelper {
             sun.light.light.add(lensflare.lensflare);
         }
         this.sun = sun;
+        this.sun.sun.position.set(500, 500, 4000);
         this.scene.add(sun.sun);
         return sun;
     }
@@ -475,17 +474,5 @@ export default class THREEHelper {
         let bar3d = new Bar3d(data, type);
         this.scene.add(bar3d.mesh);
         return bar3d;
-    }
-    
-    addPie3d1(data) { // 饼图1
-        let pie3d1 = new Pie3d1(data, this.camera);
-        this.scene.add(pie3d1.mesh);
-        return pie3d1;
-    }
-    
-    addPie3d2(data) { // 饼图2
-        let pie3d2 = new Pie3d2(data);
-        this.scene.add(pie3d2.mesh);
-        return pie3d2;
     }
 }
