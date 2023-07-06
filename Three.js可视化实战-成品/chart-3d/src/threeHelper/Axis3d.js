@@ -2,40 +2,45 @@ import * as THREE from 'three';
 import { SpriteText } from './SpriteText.js';
 
 let dataExamples = [
-    '周一',
-    '周二',
-    '周三',
-    '周四',
-    '周五',
-    '周六',
-    '周日'
+    ["0%", "20%", "40%", "60%", "80%", "100%"],
+    ["line0", "line1", "line2", "line3", "line4"]
 ]
 
 export class Axis3d {
-    constructor(category, space = 1, size = new THREE.Vector3(8, 6, 4)) {
+    constructor(category, bottom = 0, left = 2, size = new THREE.Vector3(8, 6, 4)) {
         this.mesh = new THREE.Group();
         // 水平面网格
-        let gridHelper = new GridHelper(size.x, size.y);
+        let gridHelper = new GridHelper(size.x, size.z);
         this.mesh.add(gridHelper);
         // 垂直面网格
-        let gridVHelper = new GridHelper(size.z, size.y);
+        let gridVHelper = new GridHelper(size.y, size.z);
         gridVHelper.rotation.z = Math.PI / 2;
-        gridVHelper.position.set(-size.x / 2, size.z / 2, 0);
+        gridVHelper.position.set(-size.x / 2, size.y / 2, 0);
         this.mesh.add(gridVHelper);
         // 侧面网格
-        let gridZHelper = new GridHelper(size.x, size.z);
+        let gridZHelper = new GridHelper(size.x, size.y);
         gridZHelper.rotation.x = Math.PI / 2;
-        gridZHelper.position.set(0, size.z / 2, -size.y / 2);
+        gridZHelper.position.set(0, size.y / 2, -size.z / 2);
         this.mesh.add(gridZHelper);
 
-        this.addAxisLabel(category, space);
+        this.addAxisLabel(category, bottom, left, size);
     }
 
-    addAxisLabel(category, space) {
+    addAxisLabel(category, bottom, left, size) {
         const data = category || dataExamples;
-        data.forEach((item, i) => {
-            const x = i === 0 ? i - data.length / 2 - 1 : i - data.length / 2 - 1 + i * space;
-            let textPosition = new THREE.Vector3(x, -0.5, 0);
+        data[0].forEach((item, i) => {
+            const y = i === 0 ?
+                bottom :
+                (size.y - bottom) / (data[0].length - 1) * i + bottom;
+            let textPosition = new THREE.Vector3(- size.x / 2 - 1, y, 0);
+            let spriteText = new SpriteText(item, textPosition, 0);
+            this.mesh.add(spriteText.mesh);
+        })
+        data[1].forEach((item, i) => {
+            const x = i === 0 ?
+                - (size.x / 2) + left :
+                (size.x - left) / (data[1].length - 1) * i - (size.x / 2) + left;
+            let textPosition = new THREE.Vector3(x, - 0.5, 0);
             let spriteText = new SpriteText(item, textPosition, 0);
             this.mesh.add(spriteText.mesh);
         })

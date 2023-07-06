@@ -12,6 +12,7 @@ import { Axis3d } from './Axis3d.js';
 import { Raycaster } from './Raycaster.js';
 import { SphereSky } from './SphereSky.js';
 import { Lensflares } from './Lensflare.js';
+import { Polyline3d } from './Polyline3d.js';
 import { SpriteCanvas } from "./SpriteCanvas";
 
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
@@ -441,7 +442,7 @@ export default class THREEHelper {
                 }
                 if (
                     (this.uTime.value > 18 ||
-                    this.uTime.value <= 6) &&
+                        this.uTime.value <= 6) &&
                     this.isDay === true
                 ) { // 晚8
                     this.isDay = false;
@@ -465,27 +466,33 @@ export default class THREEHelper {
         return sphereSky;
     }
 
-    addAxis3d(category, space, size) { // 3D网格坐标系
-        let axis3d = new Axis3d(category, space, size);
+    addAxis3d(category, bottom, left, size) { // 3D网格坐标系
+        let axis3d = new Axis3d(category, bottom, left, size);
         this.scene.add(axis3d.mesh);
         return axis3d;
     }
 
-    addBar3d(data, type) { // 柱形图
-        let bar3d = new Bar3d(data, type);
+    addBar3d(data, space, type) { // 柱形图
+        let bar3d = new Bar3d(data, space, type);
         this.scene.add(bar3d.mesh);
         return bar3d;
     }
-    
-    addPie3d1(data) { // 饼图1
-        let pie3d1 = new Pie3d1(data, this.camera);
+
+    addPie3d1(data, depth) { // 饼图1
+        let pie3d1 = new Pie3d1(data, this.camera, depth);
         this.scene.add(pie3d1.mesh);
         return pie3d1;
     }
-    
+
     addPie3d2(data) { // 饼图2
         let pie3d2 = new Pie3d2(data);
         this.scene.add(pie3d2.mesh);
         return pie3d2;
+    }
+
+    addPolyline3d(data, space) {
+        let polyline3d = new Polyline3d(data, space);
+        this.scene.add(polyline3d.mesh);
+        return polyline3d;
     }
 }
