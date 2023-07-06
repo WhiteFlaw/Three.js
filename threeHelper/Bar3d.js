@@ -21,7 +21,7 @@ let dataExamples = [
 ]
 
 export class Bar3d {
-    constructor(data, type = 'cylinder') { // cylinder圆柱体, rect矩形
+    constructor(data, space = 1, type = 'cylinder') { // cylinder圆柱体, rect矩形
         data = data || dataExamples;
         this.mesh = new THREE.Group();
 
@@ -38,16 +38,16 @@ export class Bar3d {
                 let boxGeometry = new THREE.BoxGeometry(1, item.value, 1);
 
                 let box = new THREE.Mesh(boxGeometry, material);
-                box.position.set(-3 + index * 2, item.value / 2, 0);
+                box.position.set(-3 + index * space, item.value / 2, 0);
                 this.mesh.add(box);
             } else {
                 let cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, item.value);
                 let cylinder = new THREE.Mesh(cylinderGeometry, material);
-                cylinder.position.set(-3 + index * 2, item.value / 2, 0);
+                cylinder.position.set(-3 + index * space, item.value / 2, 0);
                 this.mesh.add(cylinder);
             }
 
-            let textPosition = new THREE.Vector3(-3 + index * 2, item.value + 0.5, 0);
+            let textPosition = new THREE.Vector3(-3 + index * space, item.value + 0.5, 0);
             let spriteText = new SpriteText(item.name, textPosition);
             this.mesh.add(spriteText.mesh);
         })

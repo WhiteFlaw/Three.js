@@ -17,28 +17,31 @@ let screenDom = ref(null);
 let threeHelper = null;
 let vetroMaterial = null;
 
-const category = [];
+const category = [
+  ["0%", "20%", "40%", "60%", "80%", "100%"],
+  ["line0", "line1", "line2", "line3", "line4"]
+];
 
 const data = [
   {
     value: 4.0,
-    name: '80%',
+    name: "50%",
   },
   {
     value: 3.5,
-    name: '70%',
+    name: "42%",
   },
   {
-    value: 3.0,
-    name: '60%',
+    value: 5.0,
+    name: "61%",
   },
   {
     value: 2.5,
-    name: '50%',
+    name: "31%",
   },
   {
     value: 2.0,
-    name: '40%',
+    name: "22%",
   },
 ];
 
@@ -48,12 +51,16 @@ onMounted(() => {
 
 function init() {
   threeHelper = new THREEHelper(".canvas-container");
-  threeHelper.addAxis3d(category, 1, new THREE.Vector3(8, 8, 5));
+  threeHelper.addAxis();
+  threeHelper.addAxis3d(category, 0, 1.5, new THREE.Vector3(15, 8, 5));
   threeHelper.initLight();
   threeHelper.defaultLight();
 
-  // threeHelper.addBar3d(data, 'rect');
-  threeHelper.addPie3d1(data);
+  // threeHelper.addBar3d(data, 1.5, 'rect');
+  // threeHelper.addPie3d1(data, 10);
+  // threeHelper.addPie3d2(data);
+  const polyline3d = threeHelper.addPolyline3d(data, 3.4);
+  polyline3d.mesh.position.set(-6, 0, 0);
 }
 </script>
 

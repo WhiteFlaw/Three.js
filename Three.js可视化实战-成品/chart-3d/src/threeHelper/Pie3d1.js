@@ -21,7 +21,7 @@ const dataExamples = [
 ];
 
 export class Pie3d1 {
-    constructor(data, camera) {
+    constructor(data, camera, depth = 5) {
         this.sum = 0;
         this.camera = camera;
         data = data || dataExamples;
@@ -53,7 +53,7 @@ export class Pie3d1 {
 
             const extrudeSettings = {
                 steps: 1,
-                depth: (item.value / this.sum) * 5,
+                depth: (item.value / this.sum) * depth,
                 bevelEnabled: false,
                 bevelThickness: 1,
                 bevelSize: 1,
