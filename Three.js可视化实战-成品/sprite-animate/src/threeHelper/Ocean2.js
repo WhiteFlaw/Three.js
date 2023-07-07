@@ -1,31 +1,32 @@
-import * as THREE from 'three';
-import { Water } from "three/examples/jsm/objects/Water";
+import * as THREE from "three";
+import { Water } from "three/examples/jsm/objects/Water2.js";
 
-export class Ocean1 {
-    constructor(flowTexturePath, length, width, density, color) {
+export class Ocean2 {
+    constructor(length, width, density, color) {
         this.length = length;
         this.width = width;
         this.density = density;
-        this.velocity = 2.0;
-        this.flowTexture = null;
         this.color = color;
         this.mesh = null;
-
-        if (flowTexturePath) {
-            const loader = new THREE.TextureLoader();
-            this.flowTexture = loader.load(flowTexturePath, (texture) => {
-                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            })
-        }
 
         const oceanGeometry = new THREE.PlaneGeometry(width, length);
         this.mesh = new Water(oceanGeometry, {
             textureWidth: this.density, // 浑浊程度(密度)
             textureHeight: this.density, // 浑浊程度(密度)
-            waterNormals: this.flowTexture,
-            waterColor: this.color
+            flowDirection: new THREE.Vector2(1, 1),
+            color: this.color
         });
         this.mesh.rotation.x = Math.PI * -0.5;
+        this.mesh.position.y = 0;
+        this.mesh.renderOrder = -1;
+
+
+        this.mesh.material.fragmentShader =
+            this.mesh.material.fragmentShader.replace(
+                "gl_FragColor = vec4( color, 1.0 ) * mix( refractColor, reflectColor, reflectance );",
+                `gl_FragColor = vec4( color, 1.0 ) * mix( refractColor, reflectColor, reflectance );
+                gl_FragColor = mix( gl_FragColor, vec4( 0.05, 0.3, 0.7, 1.0 ), vToEye.z*0.0005+0.5 );`
+            );
     }
 
     setFlowTexture(flowTexturePath) {
@@ -34,7 +35,7 @@ export class Ocean1 {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         })
     }
-
+    
     setColor(color) {
         this.mesh.color = color;
     }
@@ -50,13 +51,6 @@ export class Ocean1 {
         this.mesh.rotation.x = Math.PI * -0.5;
     }
 
-    waterTexture() {
-        if (this.flowTexture) {
-            return true;
-        }
-        return false;
-    }
-
     setDensity(density) {
         if (!this.waterTexture()) {
             console.warn('体现密度需要水纹贴图');
@@ -65,25 +59,14 @@ export class Ocean1 {
         this.mesh.textureWidth = textureHeight = density;
     }
 
-    setVelocity(velocity) {
-        if (!this.waterTexture()) {
-            console.warn('体现流速需要水纹贴图');
-            return;
+    waterTexture() {
+        if (this.flowTexture) {
+            return true;
         }
-        let s = 0;
-        if (velocity > 15) { // 再快看起来会有点恐怖
-            s = 15;
-        } else {
-            s = velocity;
-        }
-        this.velocity = s;
+        return false;
     }
-    
-    flow() {
-        this.mesh.material.uniforms['time'].value += this.velocity / 60.0;
+
+    setDensity(density) {
+        this.mesh.textureWidth = textureHeight = density;
     }
 }
-
-  // 起初只是一个创建水的函数
-  // 后续完善了密度变更方法之类
-  // 只是让对水的各种操作变的更加容易追溯
