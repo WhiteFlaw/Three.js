@@ -3,19 +3,22 @@ import * as THREE from 'three';
 
 import { Sun } from './Sun.js';
 import { Snow } from './Snow.js';
+import { Tube } from './Tube.js';
 import { Light } from './Light.js';
+import { Curve } from './Curve.js';
 import { Bar3d } from './Bar3d.js';
 import { Pie3d1 } from './Pie3d1.js';
 import { Pie3d2 } from './Pie3d2.js';
 import { Ocean1 } from './Ocean1.js';
 import { Ocean2 } from './Ocean2.js';
 import { Axis3d } from './Axis3d.js';
+import { Effect } from './Effect.js';
+import { MatrixAxis } from './Matrix.js';
 import { Raycaster } from './Raycaster.js';
 import { SphereSky } from './SphereSky.js';
 import { Lensflares } from './Lensflare.js';
 import { Polyline3d } from './Polyline3d.js';
 import { SpriteCanvas } from "./SpriteCanvas.js";
-import { Effect } from './Effect.js';
 
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -24,14 +27,12 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export default class THREEHelper {
     constructor(selector) {
-        this.mixers = [];
-        this.actions = [];
         this.clock = new THREE.Clock();
         this.domElement = document.querySelector(selector);
         this.width = this.domElement.clientWidth;
         this.height = this.domElement.clientHeight;
-        this.updateMeshArr = [];
         this.uTime = { value: 15 };
+        this.curveMap = new Map();
         this.isDay = false;
 
         this.init();
@@ -123,19 +124,21 @@ export default class THREEHelper {
     }
 
     render() {
-        let deltaTime = this.clock.getDelta();
+        const elapsed = this.clock.getElapsedTime();
+        
         this.control && this.control.update();
 
-        for (let i = 0; i < this.mixers.length; i++) {
-            this.mixers[i].update(deltaTime * 0.2);
-        }
-        for (let i = 0; i < this.updateMeshArr.length; i++) {
-            this.updateMeshArr[i].update(deltaTime);
+        if(Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
+            for(let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
+                if(this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
+                    const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed % 1);
+                    this.curveMap.get(Array.from(this.curveMap.keys())[i]).position.copy(point);
+                }
+            }
         }
 
         if (this.points) {
             this.updateVertex();
-            // this.points.mesh.rotation.x += 3 * Math.pow(10,-3);
         }
 
         this.effect.effectComposer.render();
@@ -497,5 +500,26 @@ export default class THREEHelper {
         this.points = new Snow(geometry, color, texture);
         this.scene.add(this.points.mesh);
         return this.points;
+    }
+
+    addMatrixAxis(space, num, geometry, texture) {
+        const matrixAxis = new MatrixAxis(space, num, geometry, texture);
+        this.scene.add(matrixAxis.mesh);
+    }
+
+    addCurve(path, color) {
+        const curve = new Curve(path, color);
+        this.curveMap.set(curve, null);
+        return curve;
+    }
+
+    fllowCurve(curve, mesh) {
+        if(!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
+        this.curveMap.set(curve, mesh);
+    }
+
+    addTube(scale, tubularSegments, radius, radialSegments, color) {
+        const tube = new Tube(scale, tubularSegments, radius, radialSegments, color);
+        return tube;
     }
 }
