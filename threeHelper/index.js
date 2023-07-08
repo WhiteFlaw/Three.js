@@ -44,7 +44,19 @@ export default class THREEHelper {
         this.initRenderer();
         this.initControl();
         this.initEffect();
+        this.initLight();
         this.render();
+
+        window.addEventListener('resize', () => { this.onWindowResize() });
+    }
+
+    onWindowResize() {
+        // 重新设置相机宽高比例
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        // 更新相机投影矩阵
+        this.camera.updateProjectionMatrix();
+        // 重新设置渲染器渲染范围
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     initScene() {
@@ -85,18 +97,34 @@ export default class THREEHelper {
     }
 
     defaultLight(color = 0xffffff) {
-        const ambient0 = this.createLight('ambient', color);
-        const directional1 = this.createLight('directional', color, 0.3);
-        directional1.rePos(0, 10, 10);
-        const directional2 = this.createLight('directional', color, 0.3);
-        directional2.rePos(0, 10, -10);
-        const directional3 = this.createLight('directional', color, 0.8);
-        directional3.rePos(10, 10, 10);
-        this.scene.add(ambient0.light, directional1.light, directional2.light, directional3.light);
+        this.createAmbient(color);
+
+        const directional0 = this.createDirectional(color, 0.3);
+        directional0.rePos(0, 10, 10);
+        const directional1 = this.createDirectional(color, 0.3);
+        directional1.rePos(0, 10, -10);
+        const directional2 = this.createDirectional(color, 0.8);
+        directional2.rePos(10, 10, 10);
+
+        this.scene.add(directional0.light, directional1.light, directional2.light);
     }
 
-    createLight(type, color = 0xffffff, intensity = 1, name) { // 光不好用, 写成每种光单独一个函数, 不要传参决定类型
-        return this.light.create(type, color, intensity, name);
+    createDirectional(color, intensity, name) {
+        return this.light.createDirectionalLight(color, intensity, name);;
+    }
+
+    createAmbient(color, intensity, name) {
+        const ambient = this.light.createAmbientLight(color, intensity, name);
+        this.scene.add(ambient.light);
+        return ambient;
+    }
+
+    createSpot(color, intensity, name) {
+        return this.light.createSpotLight(color, intensity, name);
+    }
+
+    createPoint(color, intensity, name) {
+        return this.light.createPointLight(color, intensity, name);
     }
 
     getLight(name, help = false) {
@@ -107,11 +135,6 @@ export default class THREEHelper {
     checkLight() {
         console.warn(this.light.check())
         return this.light.check();
-    }
-
-    getLights() {
-        console.warn(this.light.lights);
-        return this.light.lights;
     }
 
     reposCamera(x, y, z) {
@@ -125,12 +148,12 @@ export default class THREEHelper {
 
     render() {
         const elapsed = this.clock.getElapsedTime();
-        
+
         this.control && this.control.update();
 
-        if(Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
-            for(let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
-                if(this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
+        if (Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
+            for (let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
+                if (this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
                     const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed % 1);
                     this.curveMap.get(Array.from(this.curveMap.keys())[i]).position.copy(point);
                 }
@@ -178,7 +201,7 @@ export default class THREEHelper {
             });
         });
     }
-    
+
     textureLoader(path) {
         const loader = new THREE.TextureLoader();
         return new Promise((resolve, reject) => {
@@ -514,7 +537,7 @@ export default class THREEHelper {
     }
 
     fllowCurve(curve, mesh) {
-        if(!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
+        if (!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
         this.curveMap.set(curve, mesh);
     }
 

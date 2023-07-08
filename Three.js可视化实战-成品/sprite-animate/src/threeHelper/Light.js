@@ -6,24 +6,9 @@ export class Light {
         this.lights = new Map();
     }
 
-    create(type, color, intensity, name) {
+    generateName() {
         this.max++;
-        const newName = name ? name : `${type}${this.max}`;
-        switch (type) {
-            case 'ambient':
-                this.createAmbientLight(color, intensity, newName);
-                break;
-            case 'directional':
-                this.createDirectionalLight(color, intensity, newName);
-                break;
-            case 'spot':
-                this.createSpotLight(color, intensity, newName);
-                break;
-            case 'points':
-                this.createPointLight(color, intensity, newName);
-                break;
-        }
-        return this.lights.get(newName);
+        return `light${this.max}`;
     }
 
     get(name) {
@@ -34,30 +19,33 @@ export class Light {
         return this.lights.keys();
     }
 
-    createAmbientLight(color, intensity, name) { // 加name还是得在这， 万一他直接调这几个方法就没名字了
-        const ambientLight = new Ambient(color, intensity);
-        ambientLight.name = name;
-        this.lights.set(name, ambientLight);
+    createAmbientLight(color = 0xffffff, intensity = 1, name) { // 加name还是得在这， 万一他直接调这几个方法就没名字了
+        const ambient = new Ambient(color, intensity);
+        ambient.name = name || this.generateName();
+        this.lights.set(ambient.name, ambient);
+        return ambient;
     }
 
-    createDirectionalLight(color, intensity, name) {
+    createDirectionalLight(color = 0xffffff, intensity = 1, name) {
         const directional = new Directional(color, intensity);
-        directional.name = name;
-        this.lights.set(name, directional);
+        directional.name = name || this.generateName();
+        this.lights.set(directional.name, directional);
+        return directional;
     }
 
-    createSpotLight(color, intensity, name) {
+    createSpotLight(color = 0xffffff, intensity = 1, name) {
         const spot = new Spot(color, intensity);
-        spot.name = name;
-        this.lights.set(name, spot);
+        spot.name = name || this.generateName();
+        this.lights.set(spot.name, spot);
+        return spot;
     }
 
-    createPointLight(color, intensity, name) {
+    createPointLight(color = 0xffffff, intensity = 1, name) {
         const point = new Point(color, intensity);
-        point.name = name;
-        this.lights.set(name, point);
+        point.name = name || this.generateName();
+        this.lights.set(point.name, point);
+        return point;
     }
-
 }
 
 // 以下不导出防止Light管理不到
