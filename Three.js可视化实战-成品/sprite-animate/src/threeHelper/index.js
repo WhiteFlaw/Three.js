@@ -45,6 +45,17 @@ export default class THREEHelper {
         this.initControl();
         this.initEffect();
         this.render();
+
+        window.addEventListener('resize', () => { this.onWindowResize() });
+    }
+
+    onWindowResize() {
+        // 重新设置相机宽高比例
+        camera.aspect = window.innerWidth / window.innerHeight;
+        // 更新相机投影矩阵
+        camera.updateProjectionMatrix();
+        // 重新设置渲染器渲染范围
+        webGLRenderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     initScene() {
@@ -125,12 +136,12 @@ export default class THREEHelper {
 
     render() {
         const elapsed = this.clock.getElapsedTime();
-        
+
         this.control && this.control.update();
 
-        if(Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
-            for(let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
-                if(this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
+        if (Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
+            for (let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
+                if (this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
                     const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed % 1);
                     this.curveMap.get(Array.from(this.curveMap.keys())[i]).position.copy(point);
                 }
@@ -178,7 +189,7 @@ export default class THREEHelper {
             });
         });
     }
-    
+
     textureLoader(path) {
         const loader = new THREE.TextureLoader();
         return new Promise((resolve, reject) => {
@@ -514,7 +525,7 @@ export default class THREEHelper {
     }
 
     fllowCurve(curve, mesh) {
-        if(!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
+        if (!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
         this.curveMap.set(curve, mesh);
     }
 

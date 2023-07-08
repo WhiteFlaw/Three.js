@@ -25,18 +25,20 @@ onMounted(() => {
 
 function init() {
   threeHelper = new THREEHelper(".canvas-container");
-  threeHelper.addAxis();
+  // threeHelper.addAxis();
   threeHelper.addMatrixAxis();
+  
+  threeHelper.scene.add(threeHelper.addTube().mesh);
 
-  const curve = threeHelper.addCurve();
+  /* const curve = threeHelper.addCurve();
   threeHelper.scene.add(curve.mesh);
 
-  const boxGeometry = new THREE.BoxGeometry(3, 3, 3);
+  const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
   const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const box = new THREE.Mesh(boxGeometry, boxMaterial);
   threeHelper.scene.add(box);
 
-  threeHelper.fllowCurve(curve, box);
+  threeHelper.fllowCurve(curve, box); */
 
   /* const tube = threeHelper.addTube();
   threeHelper.scene.add(tube.mesh); */
