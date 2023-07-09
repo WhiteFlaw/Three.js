@@ -33,6 +33,7 @@ export default class THREEHelper {
         this.height = this.domElement.clientHeight;
         this.uTime = { value: 15 };
         this.curveMap = new Map();
+        this.mixerMap = new Map();
         this.isDay = false;
 
         this.init();
@@ -57,6 +58,10 @@ export default class THREEHelper {
         this.camera.updateProjectionMatrix();
         // 重新设置渲染器渲染范围
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    add(...object3D) {
+        this.scene.add(...object3D);
     }
 
     initScene() {
@@ -147,6 +152,7 @@ export default class THREEHelper {
     }
 
     render() {
+        const delta = this.clock.getDelta(); // 两帧的帧时间差
         const elapsed = this.clock.getElapsedTime();
 
         this.control && this.control.update();
@@ -157,6 +163,19 @@ export default class THREEHelper {
                     const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed % 1);
                     this.curveMap.get(Array.from(this.curveMap.keys())[i]).position.copy(point);
                 }
+            }
+        }
+
+        // 全体box3应该跟随受自己框选的对象移动
+        this.scene.traverse((node) => {
+            if (node.box3) {
+                node.box3.setFromObject(node);
+            }
+        })
+
+        if (Array.from(this.mixerMap.values()).length > 0) {
+            for (let i = 0; i < Array.from(this.mixerMap.values()).length; i++) {
+                Array.from(this.mixerMap.values())[i].update(delta);
             }
         }
 
@@ -187,6 +206,8 @@ export default class THREEHelper {
         this.points.mesh.geometry.attributes.position.needsUpdate = true;;
     }
 
+    // 加载gltf模型时就为该模型创建mixer, 所有mixer加到同一个数组, 更新的时候遍历更新
+    // 同样在加载模型时为这个模型注册getAnim方法, 传入动画name获取经过mixer处理过的动画
     gltfLoader(dracoPath, gltfPath) {
         const gltfLoader = new GLTFLoader();
         const dracoLoader = new DRACOLoader();
@@ -197,6 +218,18 @@ export default class THREEHelper {
 
         return new Promise((resolve, reject) => {
             gltfLoader.load(gltfPath, (gltf) => {
+                const mixer = new THREE.AnimationMixer(gltf.scene);
+                this.mixerMap.set(gltf, mixer);
+
+                const actions = {};
+                for (let i = 0; i < gltf.animations.length; i++) {
+                    actions[`${gltf.animations[i].name}Action`] = mixer.clipAction(gltf.animations[i]);
+                }
+                gltf.actions = actions;
+
+                gltf.getActions = function (actionName) {
+                    return gltf.actions[actionName];
+                }
                 resolve(gltf);
             });
         });
@@ -209,6 +242,10 @@ export default class THREEHelper {
                 resolve(texture);
             });
         });
+    }
+
+    getMixer(gltf) {
+        return this.mixerMap.get(gltf);
     }
 
     hdrLoader(path) {
@@ -544,5 +581,40 @@ export default class THREEHelper {
     addTube(scale, tubularSegments, radius, radialSegments, color) {
         const tube = new Tube(scale, tubularSegments, radius, radialSegments, color);
         return tube;
+    }
+
+    addBox3(model, helper = false) {
+        model.box3 = new THREE.Box3();
+        if (model.scene) {
+            model.scene.traverse((node) => {
+                if (node.isSkinnedMesh) {
+                    const mesh = node;
+                    node.frustumCulled = false;
+                    mesh.geometry.computeBoundingBox();
+                    model.box3.union(mesh.geometry.boundingBox);
+                }
+            })
+        } else {
+            model.box3.setFromObject(model);
+            /* model.traverse((node) => { // 这会导致错误的撞击判定
+                const mesh = node;
+                node.frustumCulled = false;
+                mesh.geometry.computeBoundingBox();
+                model.box3.union(mesh.geometry.boundingBox);
+            }) */
+        }
+        if (helper) {
+            const box3Helper = new THREE.Box3Helper(model.box3, 0xffff00);
+            this.scene.add(box3Helper);
+        }
+        return model;
+    }
+
+    collideDetect(mesh0, mesh1) {
+        if (!mesh0.box3 || !mesh1.box3) {
+            console.warn('collideDetect: Box3 needed.')
+            return;
+        }
+        return mesh0.box3.intersectsBox(mesh1.box3);
     }
 }

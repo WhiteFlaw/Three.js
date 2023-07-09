@@ -16,11 +16,13 @@ let screenDom = ref(null);
 
 let threeHelper = null;
 let vetroMaterial = null;
+let dinoMesh = null;
 const whiteMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
 const blackMaterial = new THREE.MeshPhongMaterial({ color: 0x505050 });
 
 onMounted(() => {
   init();
+  dino();
 });
 
 function init() {
@@ -28,21 +30,30 @@ function init() {
   threeHelper.addAxis();
   threeHelper.addMatrixAxis();
   threeHelper.defaultLight();
-  
-  // threeHelper.scene.add(threeHelper.addTube().mesh);
+}
 
+function dino() {
+  threeHelper
+    .gltfLoader("./draco/gltf/", "./model/dinosaur.glb")
+    .then((gltf) => {
+      gltf.getActions("runAction").play();
+      threeHelper.addBox3(gltf, true);
+      dinoMesh = gltf;
+      threeHelper.add(gltf.scene);
+      console.log(threeHelper.scene.children)
+      curve();
+    });
+}
+
+function curve() {
   const curve = threeHelper.addCurve();
-  threeHelper.scene.add(curve.mesh);
-
-  const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-  const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const box = new THREE.Mesh(boxGeometry, boxMaterial);
-  threeHelper.scene.add(box);
-
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial(0xffffff);
+  const box = new THREE.Mesh(geo, material);
+  threeHelper.addBox3(box, true);
   threeHelper.fllowCurve(curve, box);
-
-  /* const tube = threeHelper.addTube();
-  threeHelper.scene.add(tube.mesh); */
+  threeHelper.add(curve.mesh, box);
+  threeHelper.collideDetect(dinoMesh, box);
 }
 </script>
 
