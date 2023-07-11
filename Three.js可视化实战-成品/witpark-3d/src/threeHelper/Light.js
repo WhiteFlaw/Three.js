@@ -1,0 +1,281 @@
+import * as THREE from 'three';
+
+export class Light {
+    constructor() {
+        this.max = -1;
+        this.lights = new Map();
+    }
+
+    generateName() {
+        this.max++;
+        return `light${this.max}`;
+    }
+
+    get(name) {
+        return this.lights.get(name);
+    }
+
+    check() { // 检视
+        return this.lights.keys();
+    }
+
+    createAmbientLight(color = 0xffffff, intensity = 1, name) { // 加name还是得在这， 万一他直接调这几个方法就没名字了
+        const ambient = new Ambient(color, intensity);
+        ambient.name = name || this.generateName();
+        this.lights.set(ambient.name, ambient);
+        return ambient;
+    }
+
+    createDirectionalLight(color = 0xffffff, intensity = 1, name) {
+        const directional = new Directional(color, intensity);
+        directional.name = name || this.generateName();
+        this.lights.set(directional.name, directional);
+        return directional;
+    }
+
+    createSpotLight(color = 0xffffff, intensity = 1, name) {
+        const spot = new Spot(color, intensity);
+        spot.name = name || this.generateName();
+        this.lights.set(spot.name, spot);
+        return spot;
+    }
+
+    createPointLight(color = 0xffffff, intensity = 1, name) {
+        const point = new Point(color, intensity);
+        point.name = name || this.generateName();
+        this.lights.set(point.name, point);
+        return point;
+    }
+}
+
+// 以下不导出防止Light管理不到
+class Ambient {
+    constructor(color, intensity) {
+        this.color = color;
+        this.intensity = intensity;
+        this.light = null;
+        this.init();
+    }
+
+    init() {
+        this.light = new THREE.AmbientLight(this.color, this.intensity);
+    }
+
+    setColor(color) {
+        this.light.color = color;
+    }
+
+    setIntensity(intensity) {
+        this.light.intensity = intensity;
+    }
+
+    isAmbient() {
+        if (this.light.isAmbientLight) {
+            return true;
+        }
+        return false;
+    }
+}
+
+class Directional {
+    constructor(color, intensity) {
+        this.color = color;
+        this.intensity = intensity;
+        this.light = null;
+        this.init();
+    }
+
+    init() {
+        this.light = new THREE.DirectionalLight(this.color, this.intensity);
+        this.light.castShadow = true;
+    }
+
+    rePos(x, y, z) { // 重定位
+        this.light.position.set(x, y, z);
+    }
+
+    setdecay(decay) { // 衰减速度
+        this.light.decay = decay;
+    }
+
+    setColor(color) { // 颜色
+        this.light.color = color;
+    }
+
+    setIntensity(intensity) {
+        this.light.intensity = intensity;
+    }
+
+    lookAt(target) {
+        this.light.target = target;
+    }
+
+    help() {
+        console.warn('.add(directionHelper)');
+        const directionHelper = new THREE.CameraHelper(this.light.shadow.camera);
+        return directionHelper;
+    }
+
+    limitShadow(width, height) {
+        const vec = new THREE.Vector2(width, height)
+        this.light.shadow.mapSize = vec;
+    }
+    
+    setRadius(radius) {
+        this.light.shadow.radius = radius;
+    }
+
+    setCameraLength(near, far) {
+        this.light.shadow.camera.far = far;
+        this.light.shadow.camera.near = near;
+    }
+
+    setCameraArea(top, bottom, left, right) {
+        this.light.shadow.camera.top = top;
+        this.light.shadow.camera.bottom = bottom;
+        this.light.shadow.camera.left = left;
+        this.light.shadow.camera.right = right;
+    }
+
+    isDirectional() {
+        if (this.light.isDirectionalLight) {
+            return true;
+        }
+        return false;
+    }
+}
+
+class Spot {
+    constructor(color, intensity) {
+        this.color = color;
+        this.intensity = intensity;
+        this.light = null;
+        this.init();
+    }
+
+    init() {
+        this.light = new THREE.SpotLight(this.color, this.intensity);
+        this.light.castShadow = true;
+    }
+
+    rePos(x, y, z) { // 重定位
+        this.light.position.set(x, y, z);
+    }
+
+    setdecay(decay) { // 衰减速度
+        this.light.decay = decay;
+    }
+
+    setColor(color) { // 颜色
+        this.light.color = color;
+    }
+
+    setIntensity(intensity) { // 强度
+        this.light.intensity = intensity;
+    }
+
+    setRadius(radius) {
+        this.light.shadow.radius = radius;
+    }
+
+    lookAt(target) {
+        this.light.target = target;
+    }
+
+    help() {
+        console.warn('.add(spotHelper)');
+        const spotHelper = new THREE.CameraHelper(this.light.shadow.camera);
+        return spotHelper;
+    }
+
+    setCameraLength(near, far) { // 极近 极远
+        this.light.shadow.camera.far = far;
+        this.light.shadow.camera.near = near;
+    }
+
+    setCameraFov(fov) { // 可视区上下边角度&左右边角度
+        this.light.shadow.camera.fov = fov;
+    }
+
+    limitShadow(width, height) {
+        const vec = new THREE.Vector2(width, height)
+        this.light.shadow.mapSize = vec;
+    }
+
+    setPenumbra(penumbra) { // 光暗边缘模糊度
+        this.light.penumbra = penumbra;
+    }
+
+    setPower(power) { // 功率, 会影响Intensity
+        this.light.power = power;
+    }
+
+    isSpot() {
+        if (this.light.isSpotLight) {
+            return true;
+        }
+        return false;
+    }
+}
+
+class Point {
+    constructor(color, intensity) {
+        this.color = color;
+        this.intensity = intensity;
+        this.light = null;
+        this.init();
+    }
+
+    init() {
+        this.light = new THREE.PointLight(this.color, this.intensity);
+        this.light.castShadow = true;
+    }
+
+    rePos(x, y, z) { // 重定位
+        this.light.position.set(x, y, z);
+    }
+
+    setdecay(decay) { // 衰减速度
+        this.light.decay = decay;
+    }
+
+    setColor(color) { // 颜色
+        this.light.color = color;
+    }
+
+    setIntensity(intensity) { // 强度
+        this.light.intensity = intensity;
+    }
+
+    setRadius(radius) {
+        this.light.shadow.radius = radius;
+    }
+
+    limitShadow(width, height) {
+        const vec = new THREE.Vector2(width, height)
+        this.light.shadow.mapSize = vec;
+    }
+
+    setPower(power) { // 功率, 会影响Intensity
+        this.light.power = power;
+    }
+
+    help() {
+        console.warn('.add(PointHelper)');
+        const PointHelper = new THREE.CameraHelper(this.light.shadow.camera);
+        return PointHelper;
+    }
+
+    setDistance(distance) { // 到指定距离彻底衰减
+        this.light.distance = distance;
+    }
+
+    setCameraLength(near, far) { // 极近 极远
+        this.light.shadow.camera.far = far;
+        this.light.shadow.camera.near = near;
+    }
+
+    setCameraFov(fov) { // 可视区上下边角度&左右边角度
+        this.light.shadow.camera.fov = fov;
+    }
+}
