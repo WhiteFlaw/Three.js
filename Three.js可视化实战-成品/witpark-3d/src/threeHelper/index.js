@@ -169,12 +169,12 @@ export default class THREEHelper {
         const delta = this.clock.getDelta(); // 两帧的帧时间差
         const elapsed = this.clock.getElapsedTime();
 
-        this.control && this.control.update();
+        this.control && this.control.update(delta);
 
         if (Array.from(this.curveMap.keys()).length > 0) { // 有没有办法能降速?
             for (let i = 0; i < Array.from(this.curveMap.keys()).length; i++) {
                 if (this.curveMap.get(Array.from(this.curveMap.keys())[i]) !== null) {
-                    const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed % 1);
+                    const point = Array.from(this.curveMap.keys())[i].getPoint(elapsed / this.curveMap.get(Array.from(this.curveMap.keys())[i]).deceleration % 1);
                     this.curveMap.get(Array.from(this.curveMap.keys())[i]).position.copy(point);
                 }
             }
@@ -197,7 +197,8 @@ export default class THREEHelper {
             this.updateVertex();
         }
 
-        this.effect.effectComposer.render();
+        this.effect.effectComposer.render(delta);
+        this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(this.render.bind(this));
     }
 
@@ -590,8 +591,9 @@ export default class THREEHelper {
         return curve;
     }
 
-    fllowCurve(curve, mesh) {
-        if (!mesh) console.warn('fllowCurve: param mesh cannot be undefined.');
+   fllowCurve(curve, mesh, deceleration = 3) {
+        if (!mesh) console.warn('fllowCurve: mesh cannot be undefined.');
+        mesh.deceleration = deceleration;
         this.curveMap.set(curve, mesh);
     }
 

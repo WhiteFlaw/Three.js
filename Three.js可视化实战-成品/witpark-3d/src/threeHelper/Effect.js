@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 
 import { SSRPass } from "three/addons/postprocessing/SSRPass.js";
 import { SMAAPass } from "three/addons/postprocessing/SMAAPass.js";
