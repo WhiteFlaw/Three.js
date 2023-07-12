@@ -5,6 +5,7 @@ export class Cameras {
     constructor(fov = 75, min = 1, max = 10000) {
         this.cameraMap = new Map();
         this.camera = new THREE.PerspectiveCamera(fov, window.innerHeight / window.innerHeight, min, max);
+        this.cameraMap.set('default', this.camera);
     }
 
     rePos(x, y, z) {

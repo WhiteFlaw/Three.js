@@ -17,14 +17,18 @@ import THREEHelper from "@/threeHelper/index.js";
 let gltf_n = null;
 let redcar = null;
 let action = null;
+let curve = null;
+let curveProgress = null;
 let threeHelper = null;
 
+let eventMeshArr = [];
 const props = defineProps(["eventList"]);
 
 onMounted(() => {
   init();
   addLight();
   addCity();
+  // carAnimation();
 });
 
 function init() {
@@ -61,10 +65,12 @@ function addCity() {
             )
           );
         }
-        threeHelper.addCurve(curvePath);
+        curve = threeHelper.addCurve(curvePath);
+        curveProgress = 0;
       }
       if (node.name === "redcar") {
         redcar = node;
+        threeHelper.fllowCurve(curve, redcar, 15);
       }
     });
 
@@ -72,15 +78,40 @@ function addCity() {
       threeHelper.cameras.setCamera(camera.name, camera);
       threeHelper.rePosCamera(1000, 1000, 1000);
     });
+  });
 
-    /* eventHub.on("actionClick", (i) => {
-      console.log(i);
-      action.reset();
-      action = gltf.getActionByIndex[i];
-      action.play();
-    }); */
+  eventHub.on("toggleBalloonAction", (i) => {
+    action.reset();
+    action = gltf_n.getActionByIndex(i);
+    action.play();
+  });
+
+  eventHub.on("toggleCamera", (name) => {
+    console.log(name);
+    threeHelper.toggleCamera(name);
+  });
+
+  eventHub.on("toggleControls", (name) => {
+    this[`set${name}Controls`]();
   });
 }
+
+/* function carAnimation() {
+  console.log(curve);
+  gsap.to(redcar, {
+    curveProgress: 1,
+    duration: 10,
+    repeat: -1,
+    onUpdate: () => {
+      const point = curve.getPoint(curveProgress);
+      redcar.position.set(point.x, point.y, point.z);
+      if (curveProgress + 0.001 < 1) {
+        const point = curve.getPoint(curveProgress + 0.001);
+        redcar.lookAt(point);
+      }
+    },
+  });
+} */
 </script>
 
 <style scoped>
