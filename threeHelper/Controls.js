@@ -7,35 +7,43 @@ export class Controls {
         this.controls = null;
         this.camera = camera;
         this.renderer = renderer;
-        this.setOrbitControls();
+
+        this.controlsMap = new Map();
+        this.setOrbitControl('default');
+        this.activeControl('default');
     }
-    setOrbitControls() {
-        this.controls = new OrbitControls(
-            this.camera,
-            this.renderer.domElement
-        );
+
+    setOrbitControl(name) {
+        const controls = new OrbitControls(this.camera, this.renderer.domElement);
         // 控制器阻尼
-        this.controls.enableDamping = true;
+        controls.enableDamping = true;
         // 自动旋转
         // controls.autoRotate = true;
 
-        this.controls.maxPolarAngle = Math.PI / 2;
-        this.controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.minPolarAngle = 0;
+        this.controlsMap.set(name, controls);
+        return controls;
     }
-    setFlyControls() {
-        this.controls = new FlyControls(
-            this.camera,
-            this.renderer.domElement
-        );
-        this.controls.movementSpeed = 100;
-        this.controls.rollSpeed = Math.PI / 60;
+
+    setFlyControl(name) {
+        const controls = new FlyControls(this.camera, this.renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = Math.PI / 60;
+        this.controlsMap.set(name, controls);
+        return controls;
     }
-    setFirstPersonControls() {
-        this.controls = new FirstPersonControls(
-            this.camera,
-            this.renderer.domElement
-        );
-        this.controls.movementSpeed = 100;
-        this.controls.rollSpeed = Math.PI / 60;
+
+    setFirstPersonControl(name) {
+        const controls = new FirstPersonControls(this.camera, this.renderer.domElement);
+        controls.movementSpeed = 100;
+        controls.rollSpeed = Math.PI / 60;
+        this.controlsMap.set(name, controls);
+        return controls;
+    }
+
+    activeControl(name) {
+        this.controls = this.controlsMap.get(name);
+        return this.controls;
     }
 }

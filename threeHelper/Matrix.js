@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 
 export class MatrixAxis {
-    constructor(space = 10, num = 11, geometry, texture) {
+    constructor(space = 10, density = 11, geometry, texture) {
         const particleGeometry = geometry || new THREE.BufferGeometry();
 
-        if (num % 2 === 0) {
-            num++;
+        if (density % 2 === 0) {
+            density++;
         }
 
-        const amount = num;
+        const amount = density;
         const positions = []; // 3个一组
         const colors = [];
 
