@@ -8,6 +8,11 @@ export class Cameras {
         this.cameraMap.set('default', this.camera);
     }
 
+    addPerspectiveCamera(fov = 75, min = 1, max = 10000) {
+        const camera = new THREE.PerspectiveCamera(fov, window.innerHeight / window.innerHeight, min, max);
+        return camera;
+    }
+
     rePos(x, y, z) {
         this.camera.position.set(x, y, z);
     }

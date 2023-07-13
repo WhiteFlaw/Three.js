@@ -26,9 +26,9 @@ const props = defineProps(["eventList"]);
 
 onMounted(() => {
   init();
-  addLight();
-  addCity();
-  // carAnimation();
+  light();
+  control();
+  city();
 });
 
 function init() {
@@ -37,13 +37,18 @@ function init() {
   threeHelper.setBackgroundHDR("./textures/023.hdr");
 }
 
-function addLight() {
+function light() {
   const directional = threeHelper.addDirectional();
   directional.rePos(10, 100, 10);
   threeHelper.add(directional.light);
 }
 
-function addCity() {
+function control() {
+  threeHelper.setFirstPersonControl("fly");
+  threeHelper.setFirstPersonControl("firstPerson");
+}
+
+function city() {
   threeHelper.gltfLoader("./draco/gltf/", "./model/city4.glb").then((gltf) => {
     gltf_n = gltf;
     threeHelper.add(gltf.scene);
@@ -87,31 +92,13 @@ function addCity() {
   });
 
   eventHub.on("toggleCamera", (name) => {
-    console.log(name);
     threeHelper.toggleCamera(name);
   });
 
   eventHub.on("toggleControls", (name) => {
-    this[`set${name}Controls`]();
+    threeHelper.toggleControl(name);
   });
 }
-
-/* function carAnimation() {
-  console.log(curve);
-  gsap.to(redcar, {
-    curveProgress: 1,
-    duration: 10,
-    repeat: -1,
-    onUpdate: () => {
-      const point = curve.getPoint(curveProgress);
-      redcar.position.set(point.x, point.y, point.z);
-      if (curveProgress + 0.001 < 1) {
-        const point = curve.getPoint(curveProgress + 0.001);
-        redcar.lookAt(point);
-      }
-    },
-  });
-} */
 </script>
 
 <style scoped>

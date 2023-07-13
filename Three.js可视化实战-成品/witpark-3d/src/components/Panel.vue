@@ -45,7 +45,7 @@
             <span>切换园区观览模式</span>
           </h3>
           <ul>
-            <li @click="toggleControls('Orbit')">
+            <li @click="toggleControls('default')">
               <h1>
                 <div>
                   <img class="icon" src="../assets/bg/dianli.svg" alt="" />
@@ -54,7 +54,7 @@
               </h1>
               <p>可以锁定目标建筑和园区进行轨道式360°查看</p>
             </li>
-            <li @click="toggleControls('Fly')">
+            <li @click="toggleControls('fly')">
               <h1>
                 <div>
                   <img class="icon" src="../assets/bg/dianli.svg" alt="" />
@@ -63,7 +63,7 @@
               </h1>
               <p>可以使用飞行模式进行园区进行观览</p>
             </li>
-            <li @click="toggleControls('FirstPerson')">
+            <li @click="toggleControls('firstPerson')">
               <h1>
                 <div>
                   <img class="icon" src="../assets/bg/dianli.svg" alt="" />
@@ -85,6 +85,7 @@
 <script setup>
 import { ref } from "vue";
 import eventHub from "@/util/eventHub";
+
 const props = defineProps([
   "dataInfo",
   "dataInfoNum",
@@ -237,8 +238,8 @@ const toggleControls = (name) => {
   top: 0;
   content: "";
   display: block;
-  border-bottom: 4px solid rgb(34, 133, 247);
   border-right: 4px solid rgb(34, 133, 247);
+  border-bottom: 4px solid rgb(34, 133, 247);
 }
 
 .icon {
